@@ -1,0 +1,14 @@
+{
+  "name": "ultimate-scenario-creator",
+  "version": "1.0.0",
+  "description": "An application that creates NIKKE scenarios. Too accurately.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "skuqre",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.1.0"
+  }
+}
