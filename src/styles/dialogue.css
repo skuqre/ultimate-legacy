@@ -1,0 +1,254 @@
+/* All things dialogue related */
+
+div#dialogue-main {
+    /* background-color: #f00; */
+    width: 100%;
+    height: 100%;
+
+    user-select: none;
+    overflow: hidden;
+
+    aspect-ratio: 16/9;
+}
+
+div#dialogue-main>div {
+    width: 100%;
+    height: 100%;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+div#layer-background {
+    z-index: 3;
+}
+
+div#layer-character {
+    z-index: 4;
+}
+
+div#layer-gradient {
+    display: flex;
+    flex-direction: row;
+
+    justify-content: stretch;
+    align-items: center;
+
+    mix-blend-mode: multiply;
+
+    z-index: 5;
+}
+
+div.overlay-sides {
+    background: #000;
+    flex-grow: 2;
+
+    width: auto;
+    height: 100%;
+}
+
+div#overlay-main {
+    position: relative;
+
+    mix-blend-mode: inherit;
+
+    width: 1080px;
+    height: 1080px;
+
+    aspect-ratio: 1;
+}
+
+div#overlay-main>img {
+    position: absolute;
+
+    mix-blend-mode: inherit;
+
+    z-index: 6;
+}
+
+div#dialogue-main>div#layer-dialogue {
+    position: relative;
+
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 1080px;
+    height: 1080px;
+
+    aspect-ratio: 1;
+
+    z-index: 7;
+}
+
+div#dialogue-deco-color-bar {
+    position: absolute;
+
+    background-color: #fff;
+    box-shadow: rgba(255, 255, 255, 0.5) 0 0 3px;
+
+    left: 110px;
+    top: 883px;
+
+    width: 5px;
+    height: 24px;
+}
+
+div#dialogue-text-speaker {
+    position: absolute;
+
+    left: 125px;
+    top: 880px;
+
+    /* letter-spacing: 0.05px; */
+    font-kerning: none;
+
+    font-family: 'Pretendard-Bold';
+    font-size: 23px;
+    color: #f0f0f0;
+}
+
+div#dialogue-text-content {
+    position: absolute;
+
+    left: 125px;
+    top: 930px;
+
+    /* letter-spacing: 0.05px; */
+    font-kerning: none;
+
+    font-family: 'Pretendard-Bold';
+    font-size: 23px;
+    color: #dcdcdc;
+}
+
+div#layer-controls {
+    z-index: 8;
+}
+
+div#layer-controls>div {
+    position: absolute;
+}
+
+div#layer-controls img {
+    position: absolute;
+}
+
+div#layer-controls span {
+    font-family: 'Industry-Bold';
+    font-size: 22px;
+
+    font-kerning: none;
+
+    color: #fff;
+}
+
+div.button-hitbox {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0);
+    width: 90px;
+    height: 50px;
+    z-index: 5;
+}
+
+div.button-hitbox>div.keybind-display {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+div.keybind-display {
+    border-radius: 8px;
+    border: #bcbcbc 2px solid;
+    background-color: #000;
+
+    width: min-content;
+    height: 22px;
+    min-width: 14px;
+    padding: 0 4px;
+
+    text-align: center;
+
+    color: #fcfcfc;
+    font-family: 'Industry-Bold';
+    font-size: 21px;
+
+    font-kerning: none;
+    font-size: 16px;
+}
+
+div.list {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: flex-start;
+}
+
+div.list.choices {
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: column;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    bottom: 236px;
+
+    gap: 14px;
+}
+
+div.choice {
+    display: flex;
+
+    position: relative;
+    align-items: center;
+    justify-content: center;
+
+    border-image-slice: 57 62 59 64 fill;
+    border-image-width: calc(57px * 0.59) calc(62px * 0.59) calc(59px * 0.59) calc(64px * 0.59);
+    border-image-outset: calc(8px * 0.59) calc(7px * 0.59) calc(14px * 0.59) calc(6px * 0.59);
+    border-image-repeat: stretch round;
+    border-image-source: url('../../assets/images/choice_box.png');
+
+    color: #fff;
+    font-family: 'Pretendard-Bold';
+    font-size: 21px;
+    font-kerning: none;
+    text-align: center;
+
+    padding: 8px 16px;
+    /* margin: 16px; */
+    width: 468px;
+    min-height: 43px;
+
+    /* transform: scale(0.59); */
+}
+
+div.choice-deco-mesh {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+    margin: 3px;
+
+    overflow: hidden;
+}
+
+.mesh-left, .mesh-right {
+    position: absolute;
+    top: calc(50%);
+    transform: translateY(-50%) scale(0.59);
+    left: -37px;
+}
+
+.mesh-right {
+    transform: translateY(-50%) scale(0.59) scaleX(-1) scaleY(-1);
+    left: unset;
+    right: -38px;
+}

@@ -1,0 +1,3 @@
+/*
+This script handles dialogue playback.
+*/

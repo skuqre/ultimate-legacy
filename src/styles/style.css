@@ -1,0 +1,36 @@
+/* General */
+
+@font-face {
+    font-family: 'Pretendard-Bold';
+    src: url('../../assets/fonts/Pretendard-Bold.ttf');
+}
+
+@font-face {
+    font-family: 'Pretendard-ExtraBold';
+    src: url('../../assets/fonts/Pretendard-ExtraBold.ttf');
+}
+
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('../../assets/fonts/Pretendard-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Industry-Bold';
+    src: url('../../assets/fonts/Industry-Bold.ttf');
+}
+
+:root {
+    --text-color: #ccc;
+}
+
+html {
+    background-color: #111;
+}
+
+body {
+    background-color: #111;
+
+    margin: 0;
+    padding: 0;
+}

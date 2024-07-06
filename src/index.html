@@ -1,0 +1,76 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Scenario Creator</title>
+
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/dialogue.css">
+</head>
+
+<body>
+    <div id="dialogue-main">
+        <div id="layer-background"></div>
+        <div id="layer-character"></div>
+        <div id="layer-gradient">
+            <div class="overlay-sides"></div>
+            <div id="overlay-main">
+                <img src="../assets/images/gradients/gradientD_S.png" draggable="false" alt="Speech gradient. Why are you seeing this?" style="left: 0; bottom: 0; opacity: 1;" />
+                <img src="../assets/images/gradients/gradientD_C.png" draggable="false" alt="Choice gradient. Why are you seeing this?" style="left: 0; bottom: 0; opacity: 0;" />
+                <img src="../assets/images/gradients/gradientU.png" draggable="false" alt="Top gradient. Why are you seeing this?" style="top: 0; left: 0;" />
+                <img src="../assets/images/gradients/gradientL.png" draggable="false" alt="Left gradient. Why are you seeing this?" style="top: 0; left: 0;" />
+                <img src="../assets/images/gradients/gradientR.png" draggable="false" alt="Right gradient. Why are you seeing this?" style="top: 0; right: 0;" />
+
+            </div>
+            <div class="overlay-sides"></div>
+        </div>
+        <div id="layer-dialogue">
+            <div id="dialogue-deco-color-bar"></div>
+            <div id="dialogue-text-speaker"></div>
+            <div id="dialogue-text-content"></div>
+
+            <div id="dialogue-container-choices" class="list choices">
+                <!-- <div class="choice">
+                    <div class="choice-deco-mesh">
+                        <img src="../assets/images/choice_mesh.png" class="mesh-left" />
+                        <img src="../assets/images/choice_mesh.png" class="mesh-right" />
+                    </div>
+                    <span>Something delicious.</span>
+                </div> -->
+            </div>
+        </div>
+        <div id="layer-controls">
+            <div id="control-button-skip" style="left: 1831px; top: 10px;">
+                <img src="../assets/images/icons/icon_skip.png" alt="Skip" style="scale: 0.2264150943; top: -46px; left: -81px;" />
+                <span>SKIP</span>
+                <div id="button-skip-hitbox" class="button-hitbox" style="top: 2px; left: -30px;">
+                    <div class="keybind-display">]</div>
+                </div>
+            </div>
+            <div id="control-button-log" style="left: 1744px; top: 10px;">
+                <img src="../assets/images/icons/icon_log.png" alt="Log" style="scale: 0.2133333333; top: -47px; left: -84px;" />
+                <span>LOG</span>
+                <div id="button-log-hitbox" class="button-hitbox" style="top: 2px; left: -38px;">
+                    <div class="keybind-display">TAB</div>
+                </div>
+            </div>
+            <div id="control-button-auto" style="left: 1646px; top: 10px;">
+                <img src="../assets/images/icons/icon_auto.png" alt="Auto" style="scale: 0.2133333333; top: -47px; left: -85px;" />
+                <span>AUTO</span>
+                <div id="button-auto-hitbox" class="button-hitbox" style="top: 2px; left: -35px;">
+                    <div class="keybind-display">LSHIFT</div>
+                </div>
+            </div>
+            <div id="control-button-hide" style="left: 1555px; top: 10px;">
+                <img src="../assets/images/icons/icon_hide.png" alt="Hide" style="scale: 0.4375; top: -47px; left: -88px;" />
+                <span>HIDE</span>
+                <div id="button-hide-hitbox" class="button-hitbox" style="top: 2px; left: -40px;">
+                    <div class="keybind-display">H</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
