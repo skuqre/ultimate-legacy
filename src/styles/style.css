@@ -16,6 +16,16 @@
 }
 
 @font-face {
+    font-family: 'Pretendard-Variable';
+    src: url('../../assets/fonts/Pretendard-Variable.ttf');
+}
+
+@font-face {
+    font-family: 'Pretendard-SemiBold';
+    src: url('../../assets/fonts/Pretendard-SemiBold.ttf');
+}
+
+@font-face {
     font-family: 'Industry-Bold';
     src: url('../../assets/fonts/Industry-Bold.ttf');
 }
@@ -25,11 +35,11 @@
 }
 
 html {
-    background-color: #111;
+    background-color: #fff;
 }
 
 body {
-    background-color: #111;
+    background-color: #fff;
 
     margin: 0;
     padding: 0;
