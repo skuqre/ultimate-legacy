@@ -16,8 +16,8 @@
         <div id="layer-gradient">
             <div class="overlay-sides"></div>
             <div id="overlay-main">
-                <img src="../assets/images/gradients/gradientD_S.png" draggable="false" alt="Speech gradient. Why are you seeing this?" style="left: 0; bottom: 0; opacity: 1;" />
-                <img src="../assets/images/gradients/gradientD_C.png" draggable="false" alt="Choice gradient. Why are you seeing this?" style="left: 0; bottom: 0; opacity: 0;" />
+                <div style="left: 0; bottom: 0; opacity: 0; height: 322px" id="gds"></div>
+                <img src="../assets/images/gradients/gradientD_C.png" draggable="false" alt="Choice gradient. Why are you seeing this?" style="left: 0; bottom: 0; opacity: 1;" id="gdc" />
                 <img src="../assets/images/gradients/gradientU.png" draggable="false" alt="Top gradient. Why are you seeing this?" style="top: 0; left: 0;" />
                 <img src="../assets/images/gradients/gradientL.png" draggable="false" alt="Left gradient. Why are you seeing this?" style="top: 0; left: 0;" />
                 <img src="../assets/images/gradients/gradientR.png" draggable="false" alt="Right gradient. Why are you seeing this?" style="top: 0; right: 0;" />
@@ -26,17 +26,17 @@
             <div class="overlay-sides"></div>
         </div>
         <div id="layer-dialogue">
-            <div id="dialogue-container-speech">
+            <div id="dialogue-container-speech" style="opacity: 0;">
                 <div id="dialogue-deco-color-bar"></div>
                 <div id="dialogue-text-speaker"></div>
                 <div id="dialogue-text-content"></div>
             </div>
 
-            <!-- <div id="dialogue-container-choices" class="list choices"></div> -->
+            <div id="dialogue-container-choices" style="opacity: 0;" class="list choices"></div>
 
-            <!-- <div id="dialogue-container-narration">
+            <div id="dialogue-container-narration" style="opacity: 0;">
                 <div id="dialogue-element-narrationbox"><span></span></div>
-            </div> -->
+            </div>
         </div>
         <div id="layer-controls">
             <div id="control-button-skip" style="left: 1831px; top: 10px;">
@@ -70,7 +70,8 @@
         </div>
     </div>
 
-    <script src="./scripts/dialogue.js"></script>
+    <script src="./scripts/util.js"></script>
+    <script src="./scripts/dialogue.js" type="module"></script>
 </body>
 
 </html>

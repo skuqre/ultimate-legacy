@@ -82,11 +82,25 @@ div#dialogue-main>div#layer-dialogue {
     z-index: 7;
 }
 
+div#layer-dialogue>div,
+div#gds,
+img#gdc {
+    transition: opacity 0.2s cubic-bezier(0.37, 0, 0.63, 1);
+}
+
+div#gds {
+    position: absolute;
+    width: 100%;
+    border-image-slice: 114 0 0 0 fill;
+    border-image-width: 114px 0px 0px 0px;
+    border-image-source: url("../../assets/images/gradients/gradientD_S.png");
+}
+
 div#dialogue-deco-color-bar {
     position: absolute;
 
-    background-color: #fff;
-    box-shadow: rgba(255, 255, 255, 0.5) 0 0 3px;
+    background-color: #f5ba36;
+    box-shadow: #f5ba3680 0 0 3px;
 
     left: 110px;
     top: 883px;
@@ -113,7 +127,7 @@ div#dialogue-text-content {
     position: absolute;
 
     left: 125px;
-    top: 932px;
+    top: 927px;
 
     letter-spacing: 0.24px;
     /* font-kerning: none; */
@@ -121,6 +135,9 @@ div#dialogue-text-content {
     font-family: 'Pretendard-SemiBold';
     font-size: 23px;
     color: #dcdcdc;
+    line-height: 39px;
+
+    width: calc(100% - 250px);
 }
 
 div#layer-controls {
@@ -232,13 +249,16 @@ div.choice {
     line-height: 32px;
 
     /* transform: scale(0.59); */
+
+    transition: opacity 0.25s cubic-bezier(0.37, 0, 0.63, 1);
+    /* transition: opacity 0.1s linear; */
 }
 
-div.choice > span {
+div.choice>span {
     transform: translateY(1px);
 }
 
-div.choice.oneline > span {
+div.choice.oneline>span {
     transform: none;
 }
 
@@ -258,7 +278,8 @@ div.choice-deco {
     overflow: hidden;
 }
 
-.mesh-left, .mesh-right {
+.mesh-left,
+.mesh-right {
     position: absolute;
     top: 50%;
     transform: translateY(-50%) scale(0.59);
@@ -271,7 +292,8 @@ div.choice-deco {
     right: -38px;
 }
 
-.tri-left, .tri-right {
+.tri-left,
+.tri-right {
     position: absolute;
     top: 50%;
 }
@@ -301,7 +323,7 @@ div#dialogue-element-narrationbox {
     border-image-repeat: stretch stretch;
     border-image-outset: 23px 22px 22px 23px;
     border-image-source: url('../../assets/images/narration_box.png');
-    padding: 16px;
+    padding: 28.5px 16px;
 
     position: absolute;
 
@@ -322,6 +344,10 @@ div#dialogue-element-narrationbox {
     letter-spacing: 0.2px;
 }
 
-div#dialogue-element-narrationbox > span {
-    transform: translateY(2px);
+div#dialogue-element-narrationbox.oneline {
+    padding: 16px;
+}
+
+div#dialogue-element-narrationbox>span {
+    transform: translateY(1px);
 }

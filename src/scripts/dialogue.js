@@ -2,76 +2,227 @@
 This script handles dialogue playback.
 */
 
+var inEditor = false;
+
+const psb = new FontFace('Pretendard-SemiBold', "url('../assets/fonts/Pretendard-SemiBold.ttf')");
+await psb.load();
+document.fonts.add(psb);
+
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
-var curScenario = [];
+var curScenario = [
+    {
+		"type": "Narration",
+		"speaker": "Anis",
+		"content": "The black light fades away.",
+		"keyframes": [],
+		"time": null,
+		"choices": null
+	},
+    {
+		"type": "Narration",
+		"speaker": "Anis",
+		"content": "Everything is coated in a thick layer of dust, indicating how much time has passed since it was inhabited.",
+		"keyframes": [],
+		"time": null,
+		"choices": null
+	}
+    // {
+	// 	"type": "Choice",
+	// 	"speaker": null,
+	// 	"content": null,
+	// 	"keyframes": [],
+	// 	"time": null,
+	// 	"choices": [
+    //         {
+	// 			"text": "Also, that I graduated from the military academy.\nyeaheyehayeha",
+	// 			"jump": null
+	// 		}
+    //     ]
+	// },
+    // {
+	// 	"type": "Narration",
+	// 	"speaker": null,
+	// 	"content": "a\na\na\na\na",
+	// 	"keyframes": [],
+	// 	"time": null,
+	// 	"choices": null
+	// }
+];
 var curDialogue = 0;
 
 var curDialogueSpeaker = "";
 var curDialogueContent = [];
 var curDialogueChoices = [];
-var curDialogueState = "speech";
+var curDialogueChoiceElements = [];
+var curDialogueState = "narration";
 
+var curDialoguePlaying = false;
+var curDialogueMaxTime = 0.0;
+var curDialogueCurTime = 0.0;
+
+var dialogueColorBar = document.getElementById("dialogue-deco-color-bar");
 var dialogueSpeakerText = document.getElementById("dialogue-text-speaker");
 var dialogueContentText = document.getElementById("dialogue-text-content");
+var dialogueNarrationBox = document.getElementById("dialogue-element-narrationbox");
 var dialogueNarrationText = document.querySelector("div#dialogue-element-narrationbox > span");
 var dialogueChoiceList = document.getElementById("dialogue-container-choices");
 
-function parseDialogue() {
+var dialogueContainerSpeech = document.getElementById("dialogue-container-speech");
+var dialogueContainerChoice = document.getElementById("dialogue-container-choices");
+var dialogueContainerNarration = document.getElementById("dialogue-container-narration");
+var dialogueGradientChoice = document.getElementById("gdc");
+var dialogueGradientSpeech = document.getElementById("gds");
 
+function parseDialogue() {
+    if (curDialogue > curScenario.length - 1) return; // quit
+    
+    const entry = curScenario[curDialogue];
+    curDialogueState = entry.type.toLowerCase();
+
+    dialogueContainerSpeech.style.opacity = "0";
+    dialogueContainerChoice.style.opacity = "0";
+    dialogueContainerNarration.style.opacity = "0";
+    dialogueGradientChoice.style.opacity = "0";
+    dialogueGradientSpeech.style.opacity = "0";
+
+    switch (curDialogueState) {
+        case "speech":
+            dialogueContainerSpeech.style.opacity = "1";
+            dialogueGradientSpeech.style.opacity = "1";
+
+            dialogueSpeakerText.innerHTML = entry.speaker;
+            setText(entry.content);
+
+            curDialogueCurTime = 0.0;
+            curDialoguePlaying = true;
+
+            break;
+        case "choice":
+            dialogueContainerChoice.style.opacity = "1";
+            dialogueGradientChoice.style.opacity = "1";
+
+            for (let i = 0; i < entry.choices.length; i++) {
+                const choice = entry.choices[i];
+                addChoice(choice.text, choice.jump);
+            }
+
+            setTimeout(() => {
+                for (let i = 0; i < curDialogueChoiceElements.length; i++) {
+                    const choice = curDialogueChoiceElements[i];
+                    choice.style.opacity = "1";
+                }
+
+                curDialogueCurTime = 0.0;
+                if (curScenario[curDialogue].time != null) {
+                    curDialogueMaxTime = curScenario[curDialogue].time;
+                } else {
+                    curDialogueMaxTime = 0.0;
+                }
+
+                curDialoguePlaying = true;
+            }, 100)
+
+            break;
+        case "narration":
+            dialogueContainerNarration.style.opacity = "1";
+            dialogueGradientChoice.style.opacity = "1";
+
+            dialogueSpeakerText.innerHTML = entry.speaker;
+            setText(entry.content);
+
+            curDialogueCurTime = 0.0;
+            curDialoguePlaying = true;
+
+            break;
+    }
 }
 
+parseDialogue();
+
 /**
- * To replicate the typewriter effect has, each letter is placed in a `span` element.
+ * To replicate the typewriter effect the game has, each letter is placed in a `span` element.
  * You can easily create these arrays of spans by using this function.
+ * Does not work when the dialogue state is "choice".
  * @param { String } text 
  */
 function setText(text) {
     const split = text.trim().split("");
-    curDialogueContent.splice(0, curDialogueContent.length);
+    curDialogueContent = [];
+
+    while (dialogueContentText.firstChild) {
+        dialogueContentText.removeChild(dialogueContentText.lastChild);
+    }
+
+    while (dialogueNarrationText.firstChild) {
+        dialogueNarrationText.removeChild(dialogueNarrationText.lastChild);
+    }
 
     for (let i = 0; i < split.length; i++) {
         let letter = split[i];
         let addTo = null;
 
         switch (curDialogueState) {
-            case 'speech':
+            case "speech":
                 addTo = dialogueContentText;
+
+                // offset by line amount
+                var lines = contentMeasureText(text).length;
+                dialogueContainerSpeech.style.transform = `translateY(${-39 * Math.max(lines - 2, 0)}px)`;
+                dialogueGradientSpeech.style.height = `${322 + 39 * Math.max(lines - 2, 0)}px`;
+
                 break;
-            case 'narration':
+            case "choice":
+                console.log("[INFO] setText cannot be used for Choice-type entries!")
+                return;
+            case "narration":
                 addTo = dialogueNarrationText;
-                break;
-            case 'choice':
+
+                var lines = narrationMeasureText(text).length;
+                if (lines > 2) {
+                    dialogueNarrationBox.classList.remove("oneline");
+                } else {
+                    dialogueNarrationBox.classList.add("oneline");
+                }
+
                 break;
         }
 
-        if (letter === " ") {
-            addTo.innerHTML += ' ';
-        } else {
-            const span = document.createElement("span")
-            span.innerHTML = letter;
-            span.style.opacity = "0";
-            addTo.appendChild(span);
+        const span = document.createElement("span");
+        span.innerHTML = letter;
+        span.style.opacity = "0";
+        addTo.appendChild(span);
+
+        if (letter != " " && letter != "\n") {
             curDialogueContent.push(span);
         }
+        if (letter === "\n") {
+            addTo.appendChild(document.createElement("br"));
+        }
+    }
+
+    curDialogueMaxTime = calcLength(text);
+}
+
+function updateText() {
+    const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4/60)), 0, curDialogueContent.length);
+
+    for (let i = 0; i < curDialogueContent.length; i++) {
+        curDialogueContent[i].style.opacity = "0";
+    }
+
+    for (let i = 0; i < lettersToDisplay; i++) {
+        curDialogueContent[i].style.opacity = "1";
     }
 }
 
-/*
-<div class="choice oneline">
-    <div class="choice-deco">
-        <img src="../assets/images/choice_mesh.png" class="mesh-left" />
-        <img src="../assets/images/choice_mesh.png" class="mesh-right" />
-    </div>
-    <div class="choice-deco" id="choice-deco-tri">
-        <img src="../assets/images/choice_tri_glow.png" class="tri-left" />
-        <img src="../assets/images/choice_tri_glow.png" class="tri-right" />
-    </div>
-    <span></span>
-</div>
+/**
+ * Adds a choice.
+ * @param { String } choice 
+ * @param { Int } jumpTo 
  */
-function addChoice(choice = '', jumpTo = '') {
+function addChoice(choice = "", jumpTo = null) {
     curDialogueChoices.push({
         text: choice,
         jumpTo: jumpTo
@@ -85,13 +236,16 @@ function updateChoices() {
         dialogueChoiceList.removeChild(dialogueChoiceList.lastChild);
     }
 
+    curDialogueChoiceElements = [];
+
     for (let i = 0; i < curDialogueChoices.length; i++) {
         const choice = curDialogueChoices[i];
         const measure = choiceMeasureText(choice.text);
-        const isOneline = measure.width < (468 - 48);
+        const isOneline = measure.width < (468 - 34);
 
         const main = document.createElement("div");
         main.classList.add("choice");
+        main.style.opacity = "0";
         if (isOneline) {
             main.classList.add("oneline");
         }
@@ -127,23 +281,87 @@ function updateChoices() {
         main.appendChild(deco2);
 
         const span = document.createElement("span");
-        span.innerHTML = choice.text;
+        span.innerHTML = choice.text.replace("\n", "<br>");
 
         main.appendChild(span);
 
         dialogueChoiceList.appendChild(main);
+        curDialogueChoiceElements.push(main);
     }
 }
-
-// addChoice("Wrap Marian's bandage back on.")
-// addChoice("Also, that I graduated from the military academy.")
 
 /**
  * Measure text with choice styles. Used to differentiate single line choices and multiline choices.
  * @param { String } text 
  */
 function choiceMeasureText(text) {
-    ctx.font = "21px Pretendard-Semibold";
+    ctx.font = "21px Pretendard-SemiBold";
     ctx.letterSpacing = "0.3px";
     return ctx.measureText(text);
+}
+
+function contentMeasureText(text) {
+    ctx.font = "23px Pretendard-SemiBold";
+    ctx.letterSpacing = "0.24px";
+    return getLinesForParagraphs(ctx, text, 1080 - 250);
+}
+
+function narrationMeasureText(text) {
+    ctx.font = "23px Pretendard-SemiBold";
+    ctx.letterSpacing = "0.2px";
+    return getLinesForParagraphs(ctx, text, 534 - 32);
+}
+
+/**
+ * wtf does this do
+ */
+function skipOrProgress() {
+    if (curDialogueCurTime < curDialogueMaxTime) {
+        if (curDialoguePlaying) {
+            curDialogueCurTime = curDialogueMaxTime;
+        }
+    } else {
+        curDialogue++;
+        parseDialogue();
+    }
+}
+
+/**
+ * Main update loop function
+ * @param { Float } elapsed 
+ */
+function dialogueLoop(elapsed) {
+    if (curDialoguePlaying) {
+        if (curDialogueCurTime < curDialogueMaxTime) {
+            curDialogueCurTime += elapsed;
+            updateText();
+        } else {
+            curDialogueCurTime = curDialogueMaxTime;
+            curDialoguePlaying = false;
+            updateText(1);
+        }
+    }
+}
+
+window.addEventListener("keydown", (e) => {
+    if (!inEditor) {
+        if (e.key === " ") {
+            skipOrProgress();
+        }
+    }
+});
+
+//
+
+let bef = performance.now();
+renderLoop();
+
+function renderLoop() {
+    window.requestAnimationFrame(renderLoop);
+
+    const now = performance.now();
+    const elapsed = now - bef;
+    bef = now;
+
+    dialogueLoop(elapsed / 1000);
 }
