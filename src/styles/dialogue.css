@@ -3,12 +3,14 @@
 div#dialogue-main {
     /* background-color: #f00; */
     width: 100%;
-    height: 100%;
+    height: 100vh;
 
     user-select: none;
     overflow: hidden;
 
     aspect-ratio: 16/9;
+
+    pointer-events: none;
 }
 
 div#dialogue-main>div {
@@ -83,9 +85,12 @@ div#dialogue-main>div#layer-dialogue {
 }
 
 div#layer-dialogue>div,
+div#layer-dialogue,
+div#layer-controls,
 div#gds,
-img#gdc {
-    transition: opacity 0.2s cubic-bezier(0.37, 0, 0.63, 1);
+img#gdc,
+img#gdt {
+    transition: opacity 0.5s cubic-bezier(0.37, 0, 0.63, 1);
 }
 
 div#gds {
@@ -99,8 +104,8 @@ div#gds {
 div#dialogue-deco-color-bar {
     position: absolute;
 
-    background-color: #f5ba36;
-    box-shadow: #f5ba3680 0 0 3px;
+    background-color: #ffffff;
+    box-shadow: #ffffff80 0 0 3px;
 
     left: 110px;
     top: 883px;
@@ -141,11 +146,16 @@ div#dialogue-text-content {
 }
 
 div#layer-controls {
+    pointer-events: none;
     z-index: 8;
 }
 
 div#layer-controls>div {
     position: absolute;
+    transition: opacity 0.05s linear,
+                filter 0.05s linear,
+                scale 0.05s linear;
+    pointer-events: all;
 }
 
 div#layer-controls img {
@@ -252,7 +262,16 @@ div.choice {
 
     transition: opacity 0.25s cubic-bezier(0.37, 0, 0.63, 1);
     /* transition: opacity 0.1s linear; */
+
+    pointer-events: all;
+
+    /* BOND COLOR */
+    /* color: rgba(238.16038650000002, 117.9567882, 117.9567882, 1.0); */
 }
+
+/* div.choice:hover {
+    scale: 1.1;
+} */
 
 div.choice>span {
     transform: translateY(1px);
@@ -276,6 +295,27 @@ div.choice-deco {
     margin: 3px;
 
     overflow: hidden;
+}
+
+div.choice-deco.mesh-pressed {
+    mix-blend-mode: color-dodge;
+}
+
+div.choice-glow {
+    width: 100%;
+    height: 100%;
+
+    border-image-source: url('../../assets/images/choiceGlow.png');
+    border-image-slice: 8 8 8 8 fill;
+    border-image-width: 8px 8px 8px 8px;
+    border-image-repeat: stretch stretch;
+
+    background-color: #00c7ff;
+    mix-blend-mode: screen;
+}
+
+div.choice-deco#choice-deco-glow {
+    overflow: visible;
 }
 
 .mesh-left,
@@ -306,6 +346,10 @@ div.choice-deco {
 .tri-right {
     right: -3px;
     transform: translateY(-50%) scale(0.59) scaleX(-1) scaleY(-1);
+}
+
+.choice-press-items {
+    opacity: 0;
 }
 
 div#dialogue-container-narration {
@@ -350,4 +394,16 @@ div#dialogue-element-narrationbox.oneline {
 
 div#dialogue-element-narrationbox>span {
     transform: translateY(1px);
+}
+
+/* SPINE */
+.spine-player-canvas {
+    width: 2048px;
+    height: 2048px;
+    position: absolute;
+}
+
+div.character-spine {
+    width: 2048px;
+    height: 2048px;
 }

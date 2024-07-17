@@ -11,46 +11,171 @@ document.fonts.add(psb);
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
+var curColorDefinitions = {
+    "Anis": "#f5ba36"
+}
+
 var curScenario = [
     {
-		"type": "Narration",
-		"speaker": "Anis",
-		"content": "The black light fades away.",
-		"keyframes": [],
-		"time": null,
-		"choices": null
-	},
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "void",
+    	"content": "Hey Commander,",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
     {
-		"type": "Narration",
-		"speaker": "Anis",
-		"content": "Everything is coated in a thick layer of dust, indicating how much time has passed since it was inhabited.",
-		"keyframes": [],
-		"time": null,
-		"choices": null
-	}
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "void",
+    	"content": "what do you think of potatoes?",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
+    {
+        "type": "Choice",
+        "speaker": null,
+        "speakerModel": null,
+        "speakerModelEmotion": null,
+        "content": null,
+        "keyframes": [],
+        "time": null,
+        "choices": [
+            {
+                "text": "Can't hate them.",
+                "jump": null
+            }
+        ]
+    },
+    {
+        "type": "Choice",
+        "speaker": null,
+        "speakerModel": null,
+        "speakerModelEmotion": null,
+        "content": null,
+        "keyframes": [],
+        "time": null,
+        "choices": [
+            {
+                "text": "They can literally be anything.",
+                "jump": null
+            }
+        ]
+    },
+    {
+        "type": "Choice",
+        "speaker": null,
+        "speakerModel": null,
+        "speakerModelEmotion": null,
+        "content": null,
+        "keyframes": [],
+        "time": null,
+        "choices": [
+            {
+                "text": "Fries, mashed potatoes, food for stew...",
+                "jump": null
+            }
+        ]
+    },
+    {
+        "type": "Choice",
+        "speaker": null,
+        "speakerModel": null,
+        "speakerModelEmotion": null,
+        "content": null,
+        "keyframes": [],
+        "time": null,
+        "choices": [
+            {
+                "text": "You name it.",
+                "jump": null
+            }
+        ]
+    },
+    {
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "void",
+    	"content": "...and that's another one to the list...",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
+    {
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "idle",
+    	"content": "Oh, huh?",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
+    {
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "worry",
+    	"content": "We were thinking of what to supplies to buy and we were unsure whether to buy potatoes.",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
+    {
+    	"type": "Speech",
+    	"speaker": "Anis",
+        "speakerModel": "c012",
+        "speakerModelEmotion": "void",
+    	"content": "We'll be off.",
+    	"keyframes": [],
+    	"time": null,
+    	"choices": null
+    },
     // {
-	// 	"type": "Choice",
-	// 	"speaker": null,
-	// 	"content": null,
-	// 	"keyframes": [],
-	// 	"time": null,
-	// 	"choices": [
+    // 	"type": "Narration",
+    // 	"speaker": "Anis",
+    // 	"content": "",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
+    // {
+    //     "type": "Choice",
+    //     "speaker": null,
+    //     "content": null,
+    //     "keyframes": [],
+    //     "time": null,
+    //     "choices": [
     //         {
-	// 			"text": "Also, that I graduated from the military academy.\nyeaheyehayeha",
-	// 			"jump": null
-	// 		}
+    //             "text": "Too bright...",
+    //             "jump": null
+    //         },
+    //         {
+    //             "text": "new line\nnew line",
+    //             "jump": null
+    //         }
     //     ]
-	// },
+    // },
     // {
-	// 	"type": "Narration",
-	// 	"speaker": null,
-	// 	"content": "a\na\na\na\na",
-	// 	"keyframes": [],
-	// 	"time": null,
-	// 	"choices": null
-	// }
+    // 	"type": "Narration",
+    // 	"speaker": null,
+    // 	"content": "a\na\na\na\na",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // }
 ];
 var curDialogue = 0;
+
+var curScenarioHidden = false;
+var curScenarioAuto = false;
+var curScenarioLogOpen = false;
+var curScenarioShown = true; // delayed
 
 var curDialogueSpeaker = "";
 var curDialogueContent = [];
@@ -75,9 +200,12 @@ var dialogueContainerNarration = document.getElementById("dialogue-container-nar
 var dialogueGradientChoice = document.getElementById("gdc");
 var dialogueGradientSpeech = document.getElementById("gds");
 
+var layerDialogue = document.getElementById("layer-dialogue");
+var layerControls = document.getElementById("layer-controls");
+
 function parseDialogue() {
     if (curDialogue > curScenario.length - 1) return; // quit
-    
+
     const entry = curScenario[curDialogue];
     curDialogueState = entry.type.toLowerCase();
 
@@ -93,8 +221,31 @@ function parseDialogue() {
             dialogueGradientSpeech.style.opacity = "1";
 
             dialogueSpeakerText.innerHTML = entry.speaker;
+
+            // set color
+            let color = "#ffffff";
+
+            if (entry.speaker in curColorDefinitions) {
+                color = curColorDefinitions[entry.speaker];
+            }
+            dialogueColorBar.style.backgroundColor = color;
+            dialogueColorBar.style.boxShadow = color + "80 0 0 3px";
+
+            // set text
             setText(entry.content);
 
+            // set emotion (and make model talk)
+            if (entry.speakerModel !== null) {
+                if (!(entry.speakerModel in characters)) return;
+                if (characters[entry.speakerModel].emotion !== entry.speakerModelEmotion) {
+                    characters[entry.speakerModel].player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
+                    characters[entry.speakerModel].emotion = entry.speakerModelEmotion;
+                }
+
+                characters[entry.speakerModel].player.playAnimationWithTrack(1, "talk_start", true);
+                characters[entry.speakerModel].talking = true;
+            }
+        
             curDialogueCurTime = 0.0;
             curDialoguePlaying = true;
 
@@ -102,6 +253,8 @@ function parseDialogue() {
         case "choice":
             dialogueContainerChoice.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
+
+            curDialogueChoices = [];
 
             for (let i = 0; i < entry.choices.length; i++) {
                 const choice = entry.choices[i];
@@ -112,6 +265,9 @@ function parseDialogue() {
                 for (let i = 0; i < curDialogueChoiceElements.length; i++) {
                     const choice = curDialogueChoiceElements[i];
                     choice.style.opacity = "1";
+                    setTimeout(() => {
+                        choice.style.pointerEvents = "all";
+                    }, 250);
                 }
 
                 curDialogueCurTime = 0.0;
@@ -129,7 +285,6 @@ function parseDialogue() {
             dialogueContainerNarration.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
 
-            dialogueSpeakerText.innerHTML = entry.speaker;
             setText(entry.content);
 
             curDialogueCurTime = 0.0;
@@ -137,9 +292,88 @@ function parseDialogue() {
 
             break;
     }
+
+    if (skipNext) {
+        curDialogueCurTime = curDialogueMaxTime;
+        skipNext = false;
+    }
 }
 
-parseDialogue();
+// Controls
+const controlHide = document.getElementById("button-hide-hitbox");
+const controlAuto = document.getElementById("button-auto-hitbox");
+const controlLog = document.getElementById("button-log-hitbox");
+const controlSkip = document.getElementById("button-skip-hitbox");
+
+for (const c of [controlHide, controlAuto, controlLog, controlSkip]) {
+    c.onmousedown = (e) => {
+        controlCommonPress(c.parentElement);
+    }
+
+    c.onmouseup = (e) => {
+        controlCommonRelease(c.parentElement);
+    }
+
+    c.onmouseleave = (e) => {
+        controlCommonRelease(c.parentElement);
+    }
+}
+
+controlHide.onclick = (e) => {
+    curScenarioHidden = !curScenarioHidden;
+
+    if (curScenarioHidden) {
+        layerDialogue.style.opacity = "0";
+        layerControls.style.opacity = "0";
+
+        dialogueGradientChoice.style.opacity = "1";
+        dialogueGradientSpeech.style.opacity = "0";
+
+        curScenarioShown = false;
+    } else {
+        layerDialogue.style.opacity = "1";
+        layerControls.style.opacity = "1";
+
+        if (curScenario[curDialogue]) {
+            switch (curScenario[curDialogue].type) {
+                case "Speech":
+                    dialogueGradientSpeech.style.opacity = "1";
+                    break;
+                case "Narration":
+                case "Choice":
+                    dialogueGradientChoice.style.opacity = "1";
+                    break
+            }
+        } else {
+            dialogueGradientChoice.style.opacity = "1";
+        }
+
+        setTimeout(() => {
+            curScenarioShown = true;
+        }, 250);
+    }
+}
+
+function controlCommonPress(parentElement) {
+    parentElement.style.scale = "0.95";
+    parentElement.style.filter = "brightness(40%)";
+}
+
+function controlCommonRelease(parentElement) {
+    parentElement.style.scale = "1";
+    parentElement.style.filter = "brightness(100%)";
+}
+
+var skipNext = false;
+
+window.addEventListener("click", (e) => {
+    if (inEditor) return;
+    if (curScenarioHidden && !mouseOver("button-hide-hitbox", e)) {
+        controlHide.onclick();
+    }
+});
+
+createCharacter("c012", 4.0, 'idle', 0, 0, null, '../assets/anisl2d/c012_00');
 
 /**
  * To replicate the typewriter effect the game has, each letter is placed in a `span` element.
@@ -206,7 +440,7 @@ function setText(text) {
 }
 
 function updateText() {
-    const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4/60)), 0, curDialogueContent.length);
+    const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4 / 60)), 0, curDialogueContent.length);
 
     for (let i = 0; i < curDialogueContent.length; i++) {
         curDialogueContent[i].style.opacity = "0";
@@ -241,11 +475,12 @@ function updateChoices() {
     for (let i = 0; i < curDialogueChoices.length; i++) {
         const choice = curDialogueChoices[i];
         const measure = choiceMeasureText(choice.text);
-        const isOneline = measure.width < (468 - 34);
+        const isOneline = measure.length === 1;
 
         const main = document.createElement("div");
         main.classList.add("choice");
         main.style.opacity = "0";
+        main.style.pointerEvents = "none";
         if (isOneline) {
             main.classList.add("oneline");
         }
@@ -256,11 +491,13 @@ function updateChoices() {
         const mesh1 = document.createElement("img");
         mesh1.src = "../assets/images/choice_mesh.png";
         mesh1.classList.add("mesh-left");
+        mesh1.draggable = false;
         deco1.appendChild(mesh1);
 
         const mesh2 = document.createElement("img");
         mesh2.src = "../assets/images/choice_mesh.png";
         mesh2.classList.add("mesh-right");
+        mesh2.draggable = false;
         deco1.appendChild(mesh2);
 
         const deco2 = document.createElement("div");
@@ -270,23 +507,131 @@ function updateChoices() {
         const tri1 = document.createElement("img");
         tri1.src = "../assets/images/choice_tri_glow.png";
         tri1.classList.add("tri-left");
+        tri1.draggable = false;
         deco2.appendChild(tri1);
 
         const tri2 = document.createElement("img");
         tri2.src = "../assets/images/choice_tri_glow.png";
         tri2.classList.add("tri-right");
+        tri2.draggable = false;
         deco2.appendChild(tri2);
+
+        const deco3 = document.createElement("div");
+        deco3.classList.add("choice-deco");
+        deco3.id = "choice-deco-glow"
+
+        const glow = document.createElement("div");
+        glow.classList.add("choice-glow");
+        glow.classList.add("choice-press-items");
+        deco3.appendChild(glow);
+
+        const pressMeshes = deco1.cloneNode(true);
+        pressMeshes.classList.add("mesh-pressed")
+        pressMeshes.classList.add("choice-press-items");
 
         main.appendChild(deco1);
         main.appendChild(deco2);
+        main.appendChild(deco3);
+        main.appendChild(pressMeshes);
+        main.appendChild(pressMeshes.cloneNode());
+        main.appendChild(pressMeshes.cloneNode());
 
         const span = document.createElement("span");
-        span.innerHTML = choice.text.replace("\n", "<br>");
+        span.innerHTML = choice.text.replaceAll("\n", "<br>");
 
         main.appendChild(span);
 
+        main.onmousedown = (e) => {
+            choiceCommonPress(span.parentElement); // ???
+        }
+
+        main.onmouseup = (e) => {
+            choiceCommonRelease(span.parentElement);
+
+            setTimeout(() => {
+                curDialogueChoiceElements = [];
+                parseChoice(choice);
+            }, 300);
+
+            curDialogueChoiceElements.forEach((e) => {
+                if (e.style.scale !== "1.2")
+                {
+                    e.style.transition = "opacity 0.1666666667s linear";
+                    e.style.opacity = "0";
+                    e.style.pointerEvents = "none";
+                }
+            });
+        }
+
+        main.onmouseleave = (e) => {
+            choiceCommonLeave(span.parentElement);
+        }
+
         dialogueChoiceList.appendChild(main);
         curDialogueChoiceElements.push(main);
+    }
+}
+
+function choiceCommonPress(element) {
+    element.style.transition = "scale 0.05s linear";
+    element.style.scale = "0.95";
+
+    const triLeft = element.querySelector(".tri-left");
+    const triRight = element.querySelector(".tri-right");
+    triLeft.style.transition = "left 0.05s linear";
+    triRight.style.transition = "right 0.05s linear";
+
+    triLeft.style.left = "22px";
+    triRight.style.right = "22px";
+
+    const items = element.getElementsByClassName("choice-press-items");
+    [...items].forEach((e) => {
+        e.style.transition = "opacity 0.05s linear";
+        e.style.opacity = "1";
+    });
+}
+
+function choiceCommonRelease(element) {
+    element.style.transition = "scale 0.3s linear, opacity 0.3s linear";
+    element.style.scale = "1.2";
+    element.style.opacity = "0";
+
+    const item = element.querySelector("#choice-deco-glow > div");
+    item.style.transition = "scale 0.3s linear, opacity 0.3s linear";
+    item.style.scale = "1.5";
+    item.style.opacity = "0";
+
+    element.style.pointerEvents = "none";
+}
+
+function choiceCommonLeave(element) {
+    if (element.style.scale !== "1.2") {
+        element.style.transition = "scale 0.05s cubic-bezier(0.61, 1, 0.88, 1)";
+        element.style.scale = "1";
+
+        const triLeft = element.querySelector(".tri-left");
+        const triRight = element.querySelector(".tri-right");
+        triLeft.style.transition = "left 0.05s cubic-bezier(0.61, 1, 0.88, 1)";
+        triRight.style.transition = "right 0.05s cubic-bezier(0.61, 1, 0.88, 1)";
+
+        triLeft.style.left = "-3px";
+        triRight.style.right = "-3px";
+
+        const items = element.getElementsByClassName("choice-press-items");
+        [...items].forEach((e) => {
+            e.style.transition = "opacity 0.05s cubic-bezier(0.61, 1, 0.88, 1)";
+            e.style.opacity = "0";
+        });
+    }
+}
+
+function parseChoice(entry) {
+    if (entry.jump ?? false) {
+
+    } else {
+        curDialogueCurTime = curDialogueMaxTime;
+        curDialoguePlaying = false;
+        skipOrProgress();
     }
 }
 
@@ -297,7 +642,7 @@ function updateChoices() {
 function choiceMeasureText(text) {
     ctx.font = "21px Pretendard-SemiBold";
     ctx.letterSpacing = "0.3px";
-    return ctx.measureText(text);
+    return getLinesForParagraphs(ctx, text, 468 - 34);
 }
 
 function contentMeasureText(text) {
@@ -339,16 +684,39 @@ function dialogueLoop(elapsed) {
             curDialogueCurTime = curDialogueMaxTime;
             curDialoguePlaying = false;
             updateText(1);
+
+            if (curScenario[curDialogue].type === "Speech") {
+                if (curScenario[curDialogue].speakerModel !== null) {
+                    if (!(curScenario[curDialogue].speakerModel in characters)) return;
+                    if (!characters[curScenario[curDialogue].speakerModel].talking) return;
+
+                    characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(1, 'talk_end', true);
+                    characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(1, 4 / 60);
+                    characters[curScenario[curDialogue].speakerModel].talking = false;
+                }
+            }
         }
     }
 }
 
 window.addEventListener("keydown", (e) => {
-    if (!inEditor) {
-        if (e.key === " ") {
-            skipOrProgress();
-        }
+    if (inEditor) return;
+    if (!curScenarioShown) return;
+    if (curDialogueChoiceElements.length > 0) return;
+
+    if (e.key === " ") {
+        skipOrProgress();
     }
+    if (e.key.toLowerCase() === "h") {
+        controlHide.onclick();
+    }
+});
+
+window.addEventListener("click", (e) => {
+    if (inEditor) return;
+    if (!curScenarioShown) return;
+    if (curDialogueChoiceElements.length > 0) return;
+    skipOrProgress();
 });
 
 //
@@ -364,4 +732,5 @@ function renderLoop() {
     bef = now;
 
     dialogueLoop(elapsed / 1000);
+    characterLoop(elapsed / 1000);
 }
