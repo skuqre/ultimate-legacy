@@ -114,6 +114,26 @@ div#dialogue-deco-color-bar {
     height: 24px;
 }
 
+img#dialogue-deco-pointer {
+    position: absolute;
+    width: 16px;
+    height: 18px;
+
+    bottom: 33px;
+    right: 113px;
+
+    animation: unset;
+}
+
+@keyframes pointer {
+    0%, 37.5%, 100% {
+        transform: translateY(-3px);
+    }
+    18.75% {
+        transform: translateY(0px);
+    }
+}
+
 div#dialogue-text-speaker {
     position: absolute;
 
@@ -156,6 +176,10 @@ div#layer-controls>div {
                 filter 0.05s linear,
                 scale 0.05s linear;
     pointer-events: all;
+}
+
+div#layer-controls img {
+    position: absolute;
 }
 
 div#layer-controls img {
@@ -305,7 +329,7 @@ div.choice-glow {
     width: 100%;
     height: 100%;
 
-    border-image-source: url('../../assets/images/choiceGlow.png');
+    border-image-source: url('../../assets/images/choice_glow.png');
     border-image-slice: 8 8 8 8 fill;
     border-image-width: 8px 8px 8px 8px;
     border-image-repeat: stretch stretch;
@@ -361,12 +385,6 @@ div#dialogue-element-narrationbox {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border-image-slice: 23 22 22 23 fill;
-    border-image-width: 23px 22px 22px 23px;
-    border-image-repeat: stretch stretch;
-    border-image-outset: 23px 22px 22px 23px;
-    border-image-source: url('../../assets/images/narration_box.png');
     padding: 28.5px 16px;
 
     position: absolute;
@@ -377,7 +395,6 @@ div#dialogue-element-narrationbox {
     width: 534px;
     min-height: 108px;
 
-    opacity: 0.865;
     mix-blend-mode: multiply;
 
     text-align: center;
@@ -386,6 +403,22 @@ div#dialogue-element-narrationbox {
     line-height: 39px;
     color: #fff;
     letter-spacing: 0.2px;
+}
+
+div#dialogue-element-narrationbox::before {
+    content: '';
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-image-slice: 23 22 22 23 fill;
+    border-image-width: 23px 22px 22px 23px;
+    border-image-repeat: stretch stretch;
+    border-image-outset: 23px 22px 22px 23px;
+    border-image-source: url('../../assets/images/narration_box.png');
+    opacity: 0.865;
 }
 
 div#dialogue-element-narrationbox.oneline {
@@ -406,4 +439,28 @@ div#dialogue-element-narrationbox>span {
 div.character-spine {
     width: 2048px;
     height: 2048px;
+}
+
+div.touch-fx {
+    position: fixed;
+    transform: translate(-50%, -50%) scale(0.85);
+
+    width: 170px;
+    height: 170px;
+    animation: touchanim 0.375s steps(8) reverse;
+
+    background-image: url('../../assets/images/touch_fx.png');
+
+    z-index: 999;
+    filter: drop-shadow(0 0 4px #2dcbff) hue-rotate(200deg) brightness(1.1) opacity(0.95);
+}
+
+@keyframes touchanim {
+    0% {
+        background-position-x: 0px;
+        display: none;
+    }
+    100% {
+        background-position-x: 1360px;
+    }
 }

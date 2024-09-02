@@ -16,130 +16,160 @@ var curColorDefinitions = {
 }
 
 var curScenario = [
+    // {
+    // 	"type": "Speech",
+    // 	"speaker": "Anis",
+    //     "speakerModel": "c012",
+    //     "speakerModelEmotion": "void",
+    // 	"content": "Hey Commander,",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
     {
     	"type": "Speech",
     	"speaker": "Anis",
         "speakerModel": "c012",
-        "speakerModelEmotion": "void",
-    	"content": "Hey Commander,",
+        "speakerModelEmotion": "no",
+    	"content": "You might have an issue.",
     	"keyframes": [],
     	"time": null,
     	"choices": null
     },
     {
-    	"type": "Speech",
+    	"type": "Monologue",
     	"speaker": "Anis",
         "speakerModel": "c012",
-        "speakerModelEmotion": "void",
-    	"content": "what do you think of potatoes?",
+        "speakerModelEmotion": "no",
+    	"content": "Bang!",
     	"keyframes": [],
     	"time": null,
     	"choices": null
     },
     {
-        "type": "Choice",
-        "speaker": null,
-        "speakerModel": null,
-        "speakerModelEmotion": null,
-        "content": null,
-        "keyframes": [],
-        "time": null,
-        "choices": [
-            {
-                "text": "Can't hate them.",
-                "jump": null
-            }
-        ]
-    },
-    {
-        "type": "Choice",
-        "speaker": null,
-        "speakerModel": null,
-        "speakerModelEmotion": null,
-        "content": null,
-        "keyframes": [],
-        "time": null,
-        "choices": [
-            {
-                "text": "They can literally be anything.",
-                "jump": null
-            }
-        ]
-    },
-    {
-        "type": "Choice",
-        "speaker": null,
-        "speakerModel": null,
-        "speakerModelEmotion": null,
-        "content": null,
-        "keyframes": [],
-        "time": null,
-        "choices": [
-            {
-                "text": "Fries, mashed potatoes, food for stew...",
-                "jump": null
-            }
-        ]
-    },
-    {
-        "type": "Choice",
-        "speaker": null,
-        "speakerModel": null,
-        "speakerModelEmotion": null,
-        "content": null,
-        "keyframes": [],
-        "time": null,
-        "choices": [
-            {
-                "text": "You name it.",
-                "jump": null
-            }
-        ]
-    },
-    {
-    	"type": "Speech",
+    	"type": "Narration",
     	"speaker": "Anis",
         "speakerModel": "c012",
-        "speakerModelEmotion": "void",
-    	"content": "...and that's another one to the list...",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    },
-    {
-    	"type": "Speech",
-    	"speaker": "Anis",
-        "speakerModel": "c012",
-        "speakerModelEmotion": "idle",
-    	"content": "Oh, huh?",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    },
-    {
-    	"type": "Speech",
-    	"speaker": "Anis",
-        "speakerModel": "c012",
-        "speakerModelEmotion": "worry",
-    	"content": "We were thinking of what to supplies to buy and we were unsure whether to buy potatoes.",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    },
-    {
-    	"type": "Speech",
-    	"speaker": "Anis",
-        "speakerModel": "c012",
-        "speakerModelEmotion": "void",
-    	"content": "We'll be off.",
+        "speakerModelEmotion": "no",
+    	"content": "*Bang!*",
     	"keyframes": [],
     	"time": null,
     	"choices": null
     },
     // {
-    // 	"type": "Narration",
+    //     "type": "Choice",
+    //     "speaker": null,
+    //     "speakerModel": null,
+    //     "speakerModelEmotion": null,
+    //     "content": null,
+    //     "keyframes": [],
+    //     "time": null,
+    //     "choices": [
+    //         {
+    //             "text": "Single line choice",
+    //             "jump": null
+    //         },
+    //         {
+    //             "text": "Double line choice Double line choice Double line choice Double line choice",
+    //             "jump": null
+    //         },
+    //         {
+    //             "text": "Triple line choice Triple line choice Triple line choice Triple line choice Triple line choice Triple line choice",
+    //             "jump": null
+    //         }
+    //     ]
+    // },
+    // {
+    //     "type": "Choice",
+    //     "speaker": null,
+    //     "speakerModel": null,
+    //     "speakerModelEmotion": null,
+    //     "content": null,
+    //     "keyframes": [],
+    //     "time": null,
+    //     "choices": [
+    //         {
+    //             "text": "They can literally be anything.",
+    //             "jump": null
+    //         }
+    //     ]
+    // },
+    // {
+    //     "type": "Choice",
+    //     "speaker": null,
+    //     "speakerModel": null,
+    //     "speakerModelEmotion": null,
+    //     "content": null,
+    //     "keyframes": [],
+    //     "time": null,
+    //     "choices": [
+    //         {
+    //             "text": "Fries, mashed potatoes, food for stew...",
+    //             "jump": null
+    //         }
+    //     ]
+    // },
+    // {
+    //     "type": "Choice",
+    //     "speaker": null,
+    //     "speakerModel": null,
+    //     "speakerModelEmotion": null,
+    //     "content": null,
+    //     "keyframes": [],
+    //     "time": null,
+    //     "choices": [
+    //         {
+    //             "text": "You name it.",
+    //             "jump": null
+    //         }
+    //     ]
+    // },
+    // {
+    // 	"type": "Speech",
     // 	"speaker": "Anis",
-    // 	"content": "",
+    //     "speakerModel": "c012",
+    //     "speakerModelEmotion": "void",
+    // 	"content": "...and that's another one to the list...",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
+    // {
+    // 	"type": "Speech",
+    // 	"speaker": "Anis",
+    //     "speakerModel": "c012",
+    //     "speakerModelEmotion": "idle",
+    // 	"content": "Oh, huh?",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
+    // {
+    // 	"type": "Speech",
+    // 	"speaker": "Anis",
+    //     "speakerModel": "c012",
+    //     "speakerModelEmotion": "worry",
+    // 	"content": "We were thinking of what to supplies to buy and we were unsure whether to buy potatoes.",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
+    // {
+    // 	"type": "Speech",
+    // 	"speaker": "Anis",
+    //     "speakerModel": "c012",
+    //     "speakerModelEmotion": "void",
+    // 	"content": "We'll be off.",
+    // 	"keyframes": [],
+    // 	"time": null,
+    // 	"choices": null
+    // },
+    // {
+    // 	"type": "Narration",
+    // 	"speaker": null,
+    //     "speakerModel": null,
+    //     "speakerModelEmotion": null,
+    // 	"content": "Anis leaves the room.",
     // 	"keyframes": [],
     // 	"time": null,
     // 	"choices": null
@@ -194,6 +224,9 @@ var dialogueNarrationBox = document.getElementById("dialogue-element-narrationbo
 var dialogueNarrationText = document.querySelector("div#dialogue-element-narrationbox > span");
 var dialogueChoiceList = document.getElementById("dialogue-container-choices");
 
+var dialogueDecoPointer = document.getElementById("dialogue-deco-pointer");
+var dialogueDecoMesh = document.getElementById("dialogue-deco-mesh");
+
 var dialogueContainerSpeech = document.getElementById("dialogue-container-speech");
 var dialogueContainerChoice = document.getElementById("dialogue-container-choices");
 var dialogueContainerNarration = document.getElementById("dialogue-container-narration");
@@ -214,6 +247,9 @@ function parseDialogue() {
     dialogueContainerNarration.style.opacity = "0";
     dialogueGradientChoice.style.opacity = "0";
     dialogueGradientSpeech.style.opacity = "0";
+
+    dialogueDecoPointer.style.opacity = "0";
+    dialogueDecoPointer.style.animation = "unset";
 
     switch (curDialogueState) {
         case "speech":
@@ -281,9 +317,16 @@ function parseDialogue() {
             }, 100)
 
             break;
+        case "monologue":
         case "narration":
             dialogueContainerNarration.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
+
+            if (curDialogueState === "monologue") {
+                dialogueNarrationBox.style.color = "#ffffff";
+            } else if (curDialogueState === "narration") {
+                dialogueNarrationBox.style.color = "#d6d6d6";
+            }
 
             setText(entry.content);
 
@@ -339,6 +382,7 @@ controlHide.onclick = (e) => {
                 case "Speech":
                     dialogueGradientSpeech.style.opacity = "1";
                     break;
+                case "Monologue":
                 case "Narration":
                 case "Choice":
                     dialogueGradientChoice.style.opacity = "1";
@@ -373,7 +417,7 @@ window.addEventListener("click", (e) => {
     }
 });
 
-createCharacter("c012", 4.0, 'idle', 0, 0, null, '../assets/anisl2d/c012_00');
+// createCharacter("c012", 4.0, 'idle', 0, 0, null, '../assets/anisl2d/c012_00');
 
 /**
  * To replicate the typewriter effect the game has, each letter is placed in a `span` element.
@@ -410,6 +454,7 @@ function setText(text) {
             case "choice":
                 console.log("[INFO] setText cannot be used for Choice-type entries!")
                 return;
+            case "monologue":
             case "narration":
                 addTo = dialogueNarrationText;
 
@@ -664,6 +709,13 @@ function skipOrProgress() {
     if (curDialogueCurTime < curDialogueMaxTime) {
         if (curDialoguePlaying) {
             curDialogueCurTime = curDialogueMaxTime;
+
+            // stop all talking models
+            for (const i of Object.keys(characters)) {
+                characters[i].player.playAnimationWithTrack(1, 'talk_end', true);
+                characters[i].player.queueNextEmpty(1, 4 / 60);
+                characters[i].talking = false;
+            }
         }
     } else {
         curDialogue++;
@@ -695,6 +747,13 @@ function dialogueLoop(elapsed) {
                     characters[curScenario[curDialogue].speakerModel].talking = false;
                 }
             }
+
+            if (curScenario[curDialogue].type === "Speech" ||
+                curScenario[curDialogue].type === "Narration" ||
+                curScenario[curDialogue].type === "Monologue") {
+                dialogueDecoPointer.style.opacity = "1";
+                dialogueDecoPointer.style.animation = "0.8s infinite pointer cubic-bezier(0.37, 0, 0.63, 1)";
+            }
         }
     }
 }
@@ -717,6 +776,21 @@ window.addEventListener("click", (e) => {
     if (!curScenarioShown) return;
     if (curDialogueChoiceElements.length > 0) return;
     skipOrProgress();
+});
+
+window.addEventListener("mouseup", (e) => {
+    if (inEditor) return;
+
+    const touchFx = document.createElement("div");
+    touchFx.classList.add("touch-fx");
+    touchFx.style.left = e.clientX;
+    touchFx.style.top = e.clientY;
+
+    document.body.appendChild(touchFx);
+
+    setTimeout(() => {
+        touchFx.remove();
+    }, 375)
 });
 
 //
