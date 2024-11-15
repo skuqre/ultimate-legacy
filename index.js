@@ -1,5 +1,4 @@
 const { app, BrowserWindow, globalShortcut } = require('electron');
-const path = require('node:path');
 
 // disable lcd antialiasing, it stinks
 app.commandLine.appendSwitch("--disable-lcd-text");
@@ -22,9 +21,8 @@ const createWindow = () => {
         // fullscreen: true
     });
 
+    mainWindow.webContents.openDevTools();
     mainWindow.loadFile('src/index.html');
-
-    // Open the DevTools.
 
     let prevW = WINDOWSIZE[0];
     let prevH = WINDOWSIZE[1];

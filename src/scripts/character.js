@@ -29,10 +29,13 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
         initialAnimation: defaultAnimation,
         emotions: [],
         talking: false,
+        loaded: false,
+
+        skins: [],
 
         transforms: {
-            x: 0,
-            y: 0,
+            x: x,
+            y: y,
             rotate: 0,
             scale: 1,
             opacity: 1
@@ -40,8 +43,8 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
 
         // 0 to 1 (inclusive)
         anchorPoint: {
-            x: 0,
-            y: 0
+            x: 0.5,
+            y: 0.5
         }
     }
 
@@ -81,6 +84,14 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
                     characters[immut].emotions.push(e.name);
                 }
             });
+
+            characters[immut].skins = [];
+            player.animationState.data.skeletonData.skins.forEach((e) => {
+                characters[immut].skins.push(e.name);
+            });
+
+            console.log("CHARACTER " + immut + " LOADED!");
+            characters[immut].loaded = true;
         }
     }
 
@@ -96,6 +107,7 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
 
     characters[id].wrapper = div;
     characters[id].spineObject = new runSpineVer.SpinePlayer("character-" + id, config);
+    
 }
 
 function characterLoop(elapsed) {
@@ -105,10 +117,9 @@ function characterLoop(elapsed) {
 
         character.wrapper.style.left = `${character.transforms.x}px`;
         character.wrapper.style.top = `${character.transforms.y}px`;
-        character.wrapper.style.rotate = `${character.transforms.rotate}deg`;
-        character.wrapper.style.scale = `${character.transforms.scale}`;
         character.wrapper.style.opacity = `${character.transforms.opacity}`;
 
-        character.wrapper.style.transform = `translateX(-${character.anchorPoint.x * 100}%) translateY(-${character.anchorPoint.y * 100}%)`
+        character.wrapper.style.transform = `translateX(-${character.anchorPoint.x * 100}%) translateY(-${character.anchorPoint.y * 100}%) rotate(${character.transforms.rotate}deg)`
+        character.spineObject.zoomMultiplier = 1 / character.transforms.scale;
     }
 }

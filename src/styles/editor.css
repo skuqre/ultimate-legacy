@@ -1,0 +1,436 @@
+/* Editor */
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Pretendard-Bold';
+    color: var(--text-color);
+
+    margin: 0;
+}
+
+div.editor-main span, div.generic-popup span {
+    font-family: 'Pretendard-Regular';
+    color: var(--text-color);
+}
+
+div.editor-main {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    pointer-events: unset;
+}
+
+div.generic-double {
+    display: flex;
+    column-gap: 1px;
+    align-items: center;
+    justify-content: stretch;
+
+    background-color: var(--dark);
+    border: 1px solid var(--dark);
+    border-bottom: none;
+    border-left: none;
+
+    width: 50vw;
+    height: 50vh;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    box-sizing: border-box;
+}
+
+div.generic-double>div {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+
+    max-width: 50%;
+    flex-basis: 100%;
+    background-color: var(--darkererer);
+    height: 100%;
+}
+
+div.generic-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--dark);
+
+    width: 100%;
+    min-height: 64px;
+
+    color: var(--text-color);
+    font-size: 20px;
+}
+
+div.generic-header > span {
+    font-family: 'Pretendard-Bold';
+}
+
+div.header-button-tray {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+
+    gap: 8px;
+    width: auto;
+    height: 100%;
+}
+
+div.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+    font-size: 24px;
+
+    background-color: black;
+    border: solid 1px var(--darker);
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    color: var(--text-color);
+
+    transition: border-color 0.2s ease-in-out, 
+                background-color 0.2s ease-in-out,
+                color 0.2s ease-in-out;
+}
+
+div.button.accent:hover, div.generic-button.accent:hover {
+    border-color: var(--accent);
+    background-color: rgb(244, 210, 89, 0.25);
+    color: white;
+}
+
+div.button.red:hover, div.generic-button.red:hover {
+    border-color: rgb(255, 64, 64);
+    background-color: rgb(255, 64, 64, 0.25);
+    color: white;
+}
+
+div.button.green:hover, div.generic-button.green:hover {
+    border-color: rgb(106, 255, 101);
+    background-color: rgb(106, 255, 101, 0.25);
+    color: white;
+}
+
+div.button.white:hover, div.generic-button.white:hover {
+    border-color: rgb(128, 128, 128);
+    background-color: rgb(128, 128, 128, 0.25);
+    color: white;
+}
+
+div.generic-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+    align-items: stretch;
+    justify-content: flex-start;
+
+    width: 100%;
+    height: auto;
+    overflow-y: auto;
+
+    padding: 16px;
+
+    font-family: 'Pretendard-Regular';
+    color: var(--text-color);
+
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+div.generic-panel b {
+    font-family: 'Pretendard-Bold';
+}
+
+div.generic-panel > div {
+    display: flex;
+    flex-direction: column;
+
+    align-items: stretch;
+    justify-content: flex-start;
+
+    gap: 4px;
+
+    width: 100%;
+}
+
+input, textarea, select {
+    background-color: black;
+    border: 1px solid var(--darker);
+    color: var(--text-color);
+
+    font-family: 'Pretendard-Regular';
+    border-radius: 4px;
+
+    padding: 4px 8px;
+    box-sizing: border-box;
+    outline: none;
+    font-size: 16px;
+}
+
+input[disabled] {
+    color: var(--text-color-disabled);
+}
+
+input[type="text"] {
+    height: 32px;
+}
+
+textarea#field-dialogue-content,
+textarea#field-dialogue-ncontent,
+textarea#field-dialogue-mcontent {
+    resize: vertical;
+    height: 64px;
+    min-height: 32px;
+}
+
+select {
+    height: 32px;
+}
+
+hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--darker);
+}
+
+div.generic-list {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+    align-items: stretch;
+    justify-content: flex-start;
+
+    width: 100%;
+    height: auto;
+    overflow-y: auto;
+}
+
+div.generic-list-item {
+    min-height: 64px;
+    height: min-content;
+    border-bottom: 1px solid var(--darker);
+}
+
+div.dialogue-entry {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+
+    position: relative;
+
+    min-height: auto;
+
+    gap: 16px;
+
+    padding: 16px;
+    box-sizing: border-box;
+    color: var(--text-color);
+
+    cursor: pointer;
+}
+
+div.dialogue-entry > span {
+    font-family: 'Pretendard-Regular';
+    font-size: 16px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+div.dialogue-entry > span > b {
+    font-weight: unset;
+    font-family: 'Pretendard-Bold';
+}
+
+div.dialogue-entry code {
+    font-family: 'Pretendard-Regular';
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 2px 4px;
+}
+
+div.dialogue-entry > i {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+.alternating > div:nth-child(even) {
+    background-color: #101010;
+}
+
+.alternating > div:nth-child(odd) {
+    background-color: #121212;
+}
+
+div.select-highlight {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    border: 4px var(--accent) solid;
+
+    box-sizing: border-box;
+}
+
+div.generic-popup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.6);
+
+    z-index: 999;
+
+    transition: opacity 0.2s ease-in-out;
+}
+
+div.popup-main {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: stretch;
+    gap: 4px;
+
+    background-color: var(--darkererer);
+    border: 1px solid var(--dark);
+    border-radius: 4px;
+
+    max-width: 30%;
+    
+    padding: 32px;
+}
+
+div.popup-button-tray {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 12px;
+
+    width: 100%;
+    height: min-content;
+}
+
+div.popup-button-tray > div.button {
+    width: min-content;
+    padding: 4px 16px;
+    font-size: 16px;
+    font-family: 'Pretendard-Regular';
+}
+
+div.generic-button {
+    width: min-content;
+    padding: 4px 16px;
+    font-size: 16px;
+    font-family: 'Pretendard-Regular';
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: black;
+    border: solid 1px var(--darker);
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    color: var(--text-color);
+
+    transition: border-color 0.2s ease-in-out, 
+                background-color 0.2s ease-in-out,
+                color 0.2s ease-in-out;
+}
+
+div.generic-button.fullwidth {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+div#colordef-list {
+    width: 400px;
+    height: 200px;
+    border: 1px solid var(--dark);
+    border-radius: 4px;
+}
+
+div#colordef-list > div.generic-list-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+
+    min-height: 48px;
+    height: 48px;
+}
+
+div#colordef-list > div.generic-list-item > input[type="color"] {
+    width: 64px;
+    height: 32px;
+
+    background-color: rgba(0, 0, 0, 0);
+    border: 0;
+
+    padding: 0;
+    margin: 0;
+}
+
+div.field-double {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: stretch;
+    gap: 16px !important;
+
+    width: 100%;
+}
+
+div.field-double.stretchy {
+    align-items: center;
+    justify-content: space-between;
+    gap: unset;
+}
+
+div.field-double.stretchy > * {
+    width: 50%;
+}
+
+div.field-double > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    
+    flex-basis: 50%;
+}

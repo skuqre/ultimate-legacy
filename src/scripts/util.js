@@ -43,10 +43,14 @@ function getLinesForParagraphs(ctx, text, maxWidth) {
     return res;
 }
 
+function lerp(a, b, alpha) {
+    return a + alpha * (b - a);
+}
+
 function mouseOver(id, event) {
     const element = document.getElementById(id);
     const rect = element.getBoundingClientRect();
 
     return ((event.clientX >= rect.x && event.clientX <= rect.x + rect.width) &&
-            (event.clientY >= rect.y && event.clientY <= rect.y + rect.height));
+        (event.clientY >= rect.y && event.clientY <= rect.y + rect.height));
 }

@@ -11884,6 +11884,7 @@ var spine41 = (() => {
         this.previousViewport = {};
         this.viewportTransitionStart = 0;
         this.eventListeners = [];
+        this.zoomMultiplier = 1;
         let parentDom = typeof parent === "string" ? document.getElementById(parent) : parent;
         if (parentDom == null)
           throw new Error("SpinePlayer parent not found: " + parent);
@@ -12415,7 +12416,10 @@ var spine41 = (() => {
       }
       calculateAnimationViewport(animation, viewport) {
         if (animation.name.startsWith("talk_")) {
-          animation = this.animationState.getCurrent(0).animation;
+          animation = this.animationState.getCurrent(0).animation; // calculate with track 0 bounds
+        }
+        if (animation.name.startsWith("action") || animation.name.startsWith("expression_")) {
+          animation = this.animationState.data.skeletonData.findAnimation("idle"); // calculate with idle bounds
         }
         this.skeleton.setToSetupPose();
         let steps = 100, stepTime = animation.duration ? animation.duration / steps : 0, time = 0;
@@ -12495,6 +12499,7 @@ var spine41 = (() => {
               }
             }
             renderer.camera.zoom = this.canvas.height / this.canvas.width > viewport.height / viewport.width ? viewport.width / this.canvas.width : viewport.height / this.canvas.height;
+            renderer.camera.zoom *= this.zoomMultiplier;
             renderer.camera.position.x = viewport.x + viewport.width / 2;
             renderer.camera.position.y = viewport.y + viewport.height / 2;
 

@@ -32,15 +32,48 @@
 
 :root {
     --text-color: #ccc;
+    --text-color-disabled: #888;
+
+    --dark: #303030;
+    --darker: #202020;
+    --darkerer: #151515;
+    --darkererer: #101010;
+
+    --light: #bbb;
+    --lighter: #ccc;
+    --lighterer: #ddd;
+    --lightererer: #eee;
+
+    --accent: #f4d259;
 }
 
 html {
-    background-color: #fff;
+    background-color: #000;
 }
 
 body {
     background-color: #fff;
 
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+
     margin: 0;
     padding: 0;
+}
+
+*::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0);
+    border-left: 1px solid var(--dark);
+    /* box-sizing: border-box; */
+}
+
+*::-webkit-scrollbar {
+    width: 16px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--dark);
+    background-clip: content-box;
 }

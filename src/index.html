@@ -7,12 +7,18 @@
 
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/dialogue.css">
+    <link rel="stylesheet" href="styles/editor.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 
 <body>
-    <div id="dialogue-main">
-        <div id="layer-background"></div>
-        <div id="layer-character"></div>
+    <div id="dialogue-main" class="edit-mode">
+        <div class="layer-world">
+            <div id="layer-background">
+                <img src="https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png" alt="">
+            </div>
+            <div id="layer-character"></div>
+        </div>
         <div id="layer-gradient">
             <div class="overlay-sides"></div>
             <div id="overlay-main">
@@ -70,6 +76,168 @@
                 <div id="button-hide-hitbox" class="button-hitbox" style="top: 2px; left: -40px;">
                     <div class="keybind-display">H</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="editor-main">
+        <div class="generic-double">
+            <div id="character-main" style="width: calc(50% - 1px);">
+                <div class="generic-header">
+                    <span>Characters</span>
+                    <div class="header-button-tray">
+                        <div class="button accent" id="colordef-open">
+                            <i class="bx bxs-palette"></i>
+                        </div>
+                        <div class="button green" id="character-add">
+                            <i class="bx bx-plus"></i>
+                        </div>
+                        <div class="button red" id="character-del">
+                            <i class="bx bx-minus"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="generic-list alternating" id="editor-character-list">
+                </div>
+            </div>
+            <div id="inspector-main">
+                <div class="generic-header">
+                    <span>Inspector</span>
+                </div>
+                <div class="generic-panel" id="editor-edit-list">
+
+                    <div class="field-group-character">
+                        <b>Character ID (read-only)</b>
+                        <input type="text" id="field-character-charid" disabled />
+                    </div>
+                    <div class="field-group-character">
+                        <b>Name</b>
+                        <input type="text" id="field-character-name" />
+                    </div>
+                    <div class="field-group-character" title="A model can have variants, like how Anis: Spakling Summer has a tableless variant.">
+                        <b>Model Variant</b>
+                        <select id="field-character-variant">
+                            <option value="null">Automatic</option>
+                        </select>
+                    </div>
+                    <div class="field-group-character">
+                        <hr>
+                    </div>
+                    <div class="field-group-character field-double stretchy">
+                        <b>Initial X</b>
+                        <input type="number" id="field-character-initx" step="10">
+                    </div>
+                    <div class="field-group-character field-double stretchy">
+                        <b>Initial Y</b>
+                        <input type="number" id="field-character-inity" step="10">
+                    </div>
+                    <div class="field-group-character field-double stretchy">
+                        <b>Initial Rotate</b>
+                        <input type="number" id="field-character-initr" step="10">
+                    </div>
+                    <div class="field-group-character field-double stretchy">
+                        <b>Initial Scale</b>
+                        <input type="number" id="field-character-inits" step="0.1">
+                    </div>
+                    <div class="field-group-character field-double stretchy">
+                        <b>Initial Opacity</b>
+                        <input type="number" id="field-character-inito" step="0.1" min="0" max="1">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="generic-double" style="top: 50%">
+            <div id="dialogue-list-main" style="width: calc(50% - 1px);">
+                <div class="generic-header">
+                    <span>Dialogue</span>
+                    <div class="header-button-tray">
+                        <div class="button green" id="dialogue-add">
+                            <i class="bx bx-plus"></i>
+                        </div>
+                        <div class="button red" id="dialogue-del">
+                            <i class="bx bx-minus"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="generic-list alternating" id="editor-dialogue-list">
+                </div>
+            </div>
+            <div id="dialogue-edit-main">
+                <div class="generic-header">
+                    <span>Edit</span>
+                </div>
+                <div class="generic-panel" id="editor-edit-list">
+                    <div>
+                        <b>Type</b>
+                        <select id="field-dialogue-type">
+                            <option value="Speech">Speech</option>
+                            <option value="Choice">Choice</option>
+                            <option value="Narration">Narration</option>
+                            <option value="Monologue">Monologue</option>
+                        </select>
+                    </div>
+                    <hr>
+
+                    <div class="field-group-speech">
+                        <b>Character ID (to speak)</b>
+                        <select id="field-dialogue-charid"></select>
+                    </div>
+                    <div class="field-group-speech">
+                        <b>Emotion</b>
+                        <select id="field-dialogue-emotion"></select>
+                    </div>
+                    <div class="field-group-speech field-double">
+                        <div>
+                            <b>Focus X</b>
+                            <div class="button white" id="field-dialogue-focx"></div>
+                        </div>
+                        <div>
+                            <b>Focus Y</b>
+                            <div class="button white" id="field-dialogue-focy"></div>
+                        </div>
+                    </div>
+                    <div class="field-group-speech">
+                        <hr>
+                    </div>
+                    <div class="field-group-speech">
+                        <b>Name</b>
+                        <input type="text" id="field-dialogue-name" placeholder="Speaker's name here..." />
+                    </div>
+                    <div class="field-group-speech">
+                        <b>Content</b>
+                        <textarea id="field-dialogue-content"></textarea>
+                    </div>
+
+                    <div class="field-group-narration">
+                        <b>Content</b>
+                        <textarea id="field-dialogue-ncontent"></textarea>
+                    </div>
+
+                    <div class="field-group-monologue">
+                        <b>Content</b>
+                        <textarea id="field-dialogue-mcontent"></textarea>
+                    </div>
+
+                    <hr>
+                </div>
+            </div>
+        </div>
+        <div class="generic-double" style="top: 50%; left: 50%">
+            <div id="timeline-main" style="max-width: 100%; width: 100%; flex-basis: 100%;">
+                <div class="generic-header">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="generic-popup" id="colordef-main" style="opacity: 0; display: none;">
+        <div class="popup-main">
+            <h2>Color Definitions</h2>
+            <div class="generic-button accent fullwidth" id="colordef-add">Add new definition</div>
+            <div class="generic-list alternating" id="colordef-list"></div>
+            <div class="popup-button-tray">
+                <div class="button green" id="colordef-save">Save</div>
             </div>
         </div>
     </div>
