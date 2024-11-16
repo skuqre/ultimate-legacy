@@ -119,7 +119,7 @@ function characterLoop(elapsed) {
         character.wrapper.style.top = `${character.transforms.y}px`;
         character.wrapper.style.opacity = `${character.transforms.opacity}`;
 
-        character.wrapper.style.transform = `translateX(-${character.anchorPoint.x * 100}%) translateY(-${character.anchorPoint.y * 100}%) rotate(${character.transforms.rotate}deg)`
+        character.wrapper.style.transform = `translateX(-${character.anchorPoint.x * 100}%) translateY(-${character.anchorPoint.y * 100}%) scale(var(--scale-num)) rotate(${character.transforms.rotate}deg)`
         character.spineObject.zoomMultiplier = 1 / character.transforms.scale;
     }
 }

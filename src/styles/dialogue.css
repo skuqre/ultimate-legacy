@@ -466,6 +466,8 @@ div#dialogue-element-narrationbox>span {
 div.character-spine {
     width: 2048px;
     height: 2048px;
+
+    --scale-num: 1.0;
 }
 
 div.touch-fx {

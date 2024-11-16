@@ -85,8 +85,8 @@
             <div id="character-main" style="width: calc(50% - 1px);">
                 <div class="generic-header">
                     <span>Characters</span>
-                    <div class="header-button-tray">
-                        <div class="button accent" id="colordef-open">
+                    <div class="button-tray">
+                        <div class="button white" id="colordef-open">
                             <i class="bx bxs-palette"></i>
                         </div>
                         <div class="button green" id="character-add">
@@ -114,7 +114,7 @@
                         <b>Name</b>
                         <input type="text" id="field-character-name" />
                     </div>
-                    <div class="field-group-character" title="A model can have variants, like how Anis: Spakling Summer has a tableless variant.">
+                    <div class="field-group-character" title="A model can have variants, like how Anis: Sparkling Summer has a tableless variant.">
                         <b>Model Variant</b>
                         <select id="field-character-variant">
                             <option value="null">Automatic</option>
@@ -122,6 +122,12 @@
                     </div>
                     <div class="field-group-character">
                         <hr>
+                    </div>
+                    <div class="field-group-character">
+                        <b>Initial Emotion</b>
+                        <select id="field-character-initanim">
+                            <option value="null">Automatic</option>
+                        </select>
                     </div>
                     <div class="field-group-character field-double stretchy">
                         <b>Initial X</b>
@@ -151,7 +157,7 @@
             <div id="dialogue-list-main" style="width: calc(50% - 1px);">
                 <div class="generic-header">
                     <span>Dialogue</span>
-                    <div class="header-button-tray">
+                    <div class="button-tray">
                         <div class="button green" id="dialogue-add">
                             <i class="bx bx-plus"></i>
                         </div>
@@ -186,6 +192,7 @@
                     <div class="field-group-speech">
                         <b>Emotion</b>
                         <select id="field-dialogue-emotion"></select>
+                        <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match initial emotion</div>
                     </div>
                     <div class="field-group-speech field-double">
                         <div>
@@ -196,6 +203,10 @@
                             <b>Focus Y</b>
                             <div class="button white" id="field-dialogue-focy"></div>
                         </div>
+                    </div>
+                    <div class="field-group-speech field-double stretchy">
+                        <b>Duration (seconds)</b>
+                        <input type="number" id="field-dialogue-focd" step="0.1" value="0.5" min="0">
                     </div>
                     <div class="field-group-speech">
                         <hr>
@@ -229,12 +240,27 @@
                 </div>
             </div>
         </div>
+        <div class="generic-double" style="left: 50%">
+            <div id="viewport-main" style="max-width: 100%; width: 100%; flex-basis: 100%;">
+                <div class="button-tray" id="viewport-edit-main">
+                    <div class="button white" id="viewport-edit-move">
+                        <i class='bx bx-move'></i>
+                    </div>
+                    <div class="button white" id="viewport-edit-rotate">
+                        <i class='bx bx-refresh'></i>
+                    </div>
+                    <div class="button white" id="viewport-edit-scale">
+                        <i class='bx bx-area'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="generic-popup" id="colordef-main" style="opacity: 0; display: none;">
         <div class="popup-main">
             <h2>Color Definitions</h2>
-            <div class="generic-button accent fullwidth" id="colordef-add">Add new definition</div>
+            <div class="generic-button white fullwidth" id="colordef-add">Add new definition</div>
             <div class="generic-list alternating" id="colordef-list"></div>
             <div class="popup-button-tray">
                 <div class="button green" id="colordef-save">Save</div>

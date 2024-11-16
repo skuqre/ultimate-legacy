@@ -76,7 +76,7 @@ div.generic-header > span {
     font-family: 'Pretendard-Bold';
 }
 
-div.header-button-tray {
+div.button-tray {
     display: flex;
     align-items: center;
     flex-direction: row;
@@ -127,7 +127,31 @@ div.button.green:hover, div.generic-button.green:hover {
 }
 
 div.button.white:hover, div.generic-button.white:hover {
-    border-color: rgb(128, 128, 128);
+    border-color: rgb(200, 200, 200);
+    background-color: rgb(128, 128, 128, 0.25);
+    color: white;
+}
+
+div.button.accent.active, div.generic-button.accent.active {
+    border-color: var(--accent);
+    background-color: rgb(244, 210, 89, 0.25);
+    color: var(--accent);
+}
+
+div.button.red.active, div.generic-button.red.active {
+    border-color: rgb(255, 64, 64);
+    background-color: rgb(255, 64, 64, 0.25);
+    color: rgb(255, 64, 64);
+}
+
+div.button.green.active, div.generic-button.green.active {
+    border-color: rgb(106, 255, 101);
+    background-color: rgb(106, 255, 101, 0.25);
+    color: rgb(106, 255, 101);
+}
+
+div.button.white.active, div.generic-button.white.active {
+    border-color: rgb(200, 200, 200);
     background-color: rgb(128, 128, 128, 0.25);
     color: white;
 }
@@ -433,4 +457,24 @@ div.field-double > div {
     justify-content: space-between;
     
     flex-basis: 50%;
+}
+
+div#viewport-main {
+    position: relative;
+    display: block;
+
+    padding: 16px;
+    box-sizing: border-box;
+
+    z-index: 101;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+div#viewport-edit-main {
+    width: min-content;
+    height: max-content;
+
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
 }

@@ -22,8 +22,4 @@ Just a note, the accuracy more leads to the Summer 2024 Version (during BEAUTY F
 
 ## TO DO
 
-- [x] Add spine player
-- [ ] Add NIKKE-DB download function
-- [ ] Choice jumping logic
-- [ ] Add background changing
-- [ ] Add basic keyframe system...
+a lot of stuff...

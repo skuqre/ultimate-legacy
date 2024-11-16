@@ -85,6 +85,7 @@ var curScenario = [
         "speakerModelEmotion": "idle",
         "focusX": true,
         "focusY": false,
+        "focusDur": 1,
     	"content": "I want a cheeseburger.",
     	"keyframes": [],
     	"time": null,
@@ -97,6 +98,7 @@ var curScenario = [
         "speakerModelEmotion": "idle",
         "focusX": true,
         "focusY": false,
+        "focusDur": 1,
     	"content": "Me too.",
     	"keyframes": [],
     	"time": null,
@@ -109,6 +111,7 @@ var curScenario = [
         "speakerModelEmotion": "idle",
         "focusX": true,
         "focusY": false,
+        "focusDur": 1,
     	"content": "Me three.",
     	"keyframes": [],
     	"time": null,
@@ -195,6 +198,25 @@ function parseDialogue(noTalk = false) {
             if (entry.speakerModel !== null) {
                 if (!(entry.speakerModel in characters)) return;
 
+                // move model to the top most layer by removing then appending
+                const characterElement = characters[entry.speakerModel].wrapper;
+                characterLayer.removeChild(characterElement);
+                characterLayer.appendChild(characterElement);
+
+                // make model size up like the game does for some reason???
+                const characterWrappers = [...document.getElementsByClassName("character-spine")];
+                for (const i of characterWrappers) {
+                    i.style.setProperty("--scale-num", "1.0");
+                }
+                const scaleTween = new Tween({scale: 1})
+                    .to({scale: 1.005}, 1000) // debatable
+                    .easing(Easing.Sinusoidal.InOut)
+                    .onUpdate((e) => {
+                        characterElement.style.setProperty("--scale-num", `${e.scale}`);
+                    })
+                    .start();
+                tweens.push(scaleTween);
+
                 if (!noTalk) {
                     if (characters[entry.speakerModel].emotion !== entry.speakerModelEmotion) {
                         characters[entry.speakerModel].player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
@@ -210,7 +232,7 @@ function parseDialogue(noTalk = false) {
                         .to({
                             x: entry.focusX ? characters[entry.speakerModel].transforms.x : camera.x,
                             y: entry.focusY ? characters[entry.speakerModel].transforms.y : camera.y,
-                        }, 1000)
+                        }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
                         .easing(Easing.Sinusoidal.InOut)
                         .start()
                     tweens.push(tween);
@@ -419,7 +441,6 @@ function setText(text) {
 }
 
 function updateText() {
-    console.log("NOTHING IS SUPPOSED TO FUCK WITH YOU BUT YOU ARE DOING IT SO WHAT THE FUCK IS WRONG???");
     const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4 / 60)), 0, curDialogueContent.length);
 
     for (let i = 0; i < curDialogueContent.length; i++) {
@@ -758,6 +779,13 @@ function initPositions() {
 
         const skin = i.initVariant !== null ? i.initVariant : characters[i.id].skins[0];
         characters[i.id].player.skeleton.setSkinByName(skin);
+
+        const initAnim = i.initAnimation !== null ? i.initAnimation : "idle";
+
+        if (characters[i.id].emotion !== initAnim) {
+            characters[i.id].player.playAnimationWithTrack(0, initAnim, true);
+            characters[i.id].emotion = initAnim;
+        }
     }
 }
 
@@ -999,9 +1027,11 @@ const fieldDialogueName = document.getElementById("field-dialogue-name");
 const fieldDialogueContent = document.getElementById("field-dialogue-content");
 const fieldDialogueCharacter = document.getElementById("field-dialogue-charid");
 const fieldDialogueEmotion = document.getElementById("field-dialogue-emotion");
+const fieldDialogueMatchInit = document.getElementById("field-dialogue-matchinit");
 
 const fieldDialogueFocusX = document.getElementById("field-dialogue-focx");
 const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
+const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
 
 const fieldNarrationContent = document.getElementById("field-dialogue-ncontent");
 const fieldMonologueContent = document.getElementById("field-dialogue-mcontent");
@@ -1055,6 +1085,7 @@ function updateEditPanel() {
             
             fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
             fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
+            fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
 
             break;
         case "Choice":
@@ -1243,6 +1274,16 @@ fieldDialogueEmotion.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueMatchInit.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+    const character = curCharacters.filter((e) => e.id === entry.speakerModel)[0];
+
+    entry.speakerModelEmotion = character.initAnimation;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueFocusX.addEventListener("click", () => {
     const entry = curScenario[curDialogue];
 
@@ -1260,6 +1301,15 @@ fieldDialogueFocusY.addEventListener("click", () => {
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
 });
+
+fieldDialogueFocusDur.addEventListener("change", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusDur = parseFloat(fieldDialogueFocusDur.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+})
 
 fieldNarrationContent.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
@@ -1282,6 +1332,7 @@ fieldMonologueContent.addEventListener("input", () => {
 const fieldCharacterID = document.getElementById("field-character-charid");
 const fieldCharacterName = document.getElementById("field-character-name");
 const fieldCharacterVariant = document.getElementById("field-character-variant");
+const fieldCharacterInitAnim = document.getElementById("field-character-initanim");
 const fieldCharacterInitX = document.getElementById("field-character-initx");
 const fieldCharacterInitY = document.getElementById("field-character-inity");
 const fieldCharacterInitR = document.getElementById("field-character-initr");
@@ -1313,9 +1364,18 @@ function updateInspectorPanel() {
             fieldCharacterVariant.appendChild(option);
         }
 
+        fieldCharacterInitAnim.innerHTML = "<option value=\"null\">Automatic</option>";
+        for (const i of characters[character.id].emotions) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.innerHTML = i;
+            fieldCharacterInitAnim.appendChild(option);
+        }
+
         fieldCharacterID.value = character.id;
         fieldCharacterName.value = character.name;
         fieldCharacterVariant.value = character.initVariant;
+        fieldCharacterInitAnim.value = character.initAnimation;
         fieldCharacterInitX.value = character.initTransforms.x;
         fieldCharacterInitY.value = character.initTransforms.y;
         fieldCharacterInitR.value = character.initTransforms.rotate;
@@ -1352,7 +1412,20 @@ fieldCharacterVariant.addEventListener("input", () => {
         character.initVariant = null;
     }
 
-    updateCharacterList();
+    selectCharacterEntry(curSelectedCharacter);
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldCharacterInitAnim.addEventListener("input", () => {
+    if (curSelectedCharacter === null) return;
+    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
+
+    if (fieldCharacterInitAnim.value !== "null") {
+        character.initAnimation = fieldCharacterInitAnim.value;
+    } else {
+        character.initAnimation = null;
+    }
+
     selectCharacterEntry(curSelectedCharacter);
     selectDialogueEntry(curSelectedEntry);
 });
