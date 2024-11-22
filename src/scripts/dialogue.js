@@ -17,6 +17,8 @@ const ctx = canvas.getContext("2d");
 var camera = {
     initX: 1920 * 0.125,
     initY: 1080 * 0.5,
+    initZ: 1.0,
+    initR: 0,
     x: 0,
     y: 0,
     z: 1.0,
@@ -154,6 +156,7 @@ var dialogueGradientSpeech = document.getElementById("gds");
 var layerDialogue = document.getElementById("layer-dialogue");
 var layerControls = document.getElementById("layer-controls");
 
+var layerWorld = document.getElementById("layer-world");
 var layerBackground = document.getElementById("layer-background");
 var layerCharacter = document.getElementById("layer-character");
 
@@ -725,10 +728,20 @@ function dialogueLoop(elapsed) {
  * camera update
  */
 function cameraLoop(elapsed) {
-    layerBackground.style.left = 1920 * 0.5 + ((1920 * 0.5 - camera.x) * 0.1) + "px";
-    layerBackground.style.top = 1080 * 0.5 + ((1080 * 0.5 - camera.y) * 0.1) + "px";
-    layerCharacter.style.left = (1920 * 0.5 - camera.x) + "px";
-    layerCharacter.style.top = (1080 * 0.5 - camera.y) + "px";
+    layerBackground.style.transform = `
+    translateX(${(1920 * 0.5 + ((1920 * 0.5 - camera.x) * 0.1))}px)
+    translateY(${(1080 * 0.5 + ((1080 * 0.5 - camera.y) * 0.1))}px)
+    `;
+
+    layerCharacter.style.transform = `
+    translateX(${((1920 * 0.5 - camera.x))}px)
+    translateY(${((1080 * 0.5 - camera.y))}px)
+    `
+
+    layerWorld.style.transform = `
+    rotate(${camera.r}deg)
+    scale(${camera.z})
+    `
 }
 
 /**
@@ -768,6 +781,8 @@ function init() {
 function initPositions() {
     camera.x = camera.initX;
     camera.y = camera.initY;
+    camera.z = camera.initZ;
+    camera.r = camera.initR;
 
     // initialize character positions
     for (const i of curCharacters) {
@@ -1329,16 +1344,6 @@ fieldMonologueContent.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
-const fieldCharacterID = document.getElementById("field-character-charid");
-const fieldCharacterName = document.getElementById("field-character-name");
-const fieldCharacterVariant = document.getElementById("field-character-variant");
-const fieldCharacterInitAnim = document.getElementById("field-character-initanim");
-const fieldCharacterInitX = document.getElementById("field-character-initx");
-const fieldCharacterInitY = document.getElementById("field-character-inity");
-const fieldCharacterInitR = document.getElementById("field-character-initr");
-const fieldCharacterInitS = document.getElementById("field-character-inits");
-const fieldCharacterInitO = document.getElementById("field-character-inito");
-
 function updateInspectorPanel() {
     for (const i of ["character", "world", "keyframe"]) {
         const groupName = "field-group-" + i.toLowerCase();
@@ -1383,6 +1388,11 @@ function updateInspectorPanel() {
         fieldCharacterInitO.value = character.initTransforms.opacity;
     } else {
         selectedGroupName = "world";
+
+        fieldWorldInitCamX.value = camera.initX;
+        fieldWorldInitCamY.value = camera.initY;
+        fieldWorldInitCamZ.value = camera.initZ;
+        fieldWorldInitCamR.value = camera.initR;
     }
     
     const selectedGroupElement = document.getElementsByClassName("field-group-" + selectedGroupName);
@@ -1391,6 +1401,16 @@ function updateInspectorPanel() {
         e.style.display = "";
     }
 }
+
+const fieldCharacterID = document.getElementById("field-character-charid");
+const fieldCharacterName = document.getElementById("field-character-name");
+const fieldCharacterVariant = document.getElementById("field-character-variant");
+const fieldCharacterInitAnim = document.getElementById("field-character-initanim");
+const fieldCharacterInitX = document.getElementById("field-character-initx");
+const fieldCharacterInitY = document.getElementById("field-character-inity");
+const fieldCharacterInitR = document.getElementById("field-character-initr");
+const fieldCharacterInitS = document.getElementById("field-character-inits");
+const fieldCharacterInitO = document.getElementById("field-character-inito");
 
 fieldCharacterName.addEventListener("input", () => {
     if (curSelectedCharacter === null) return;
@@ -1477,6 +1497,37 @@ fieldCharacterInitO.addEventListener("input", () => {
     character.initTransforms.opacity = parseFloat(fieldCharacterInitO.value);
 
     selectCharacterEntry(curSelectedCharacter);
+    updatePositionsToLatest();
+});
+
+const worldOpen = document.getElementById("world-open");
+
+worldOpen.addEventListener("click", () => {
+    selectCharacterEntry(null);
+});
+
+const fieldWorldInitCamX = document.getElementById("field-world-initcamx");
+const fieldWorldInitCamY = document.getElementById("field-world-initcamy");
+const fieldWorldInitCamZ = document.getElementById("field-world-initcamz");
+const fieldWorldInitCamR = document.getElementById("field-world-initcamr");
+
+fieldWorldInitCamX.addEventListener("input", () => {
+    camera.initX = parseFloat(fieldWorldInitCamX.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitCamY.addEventListener("input", () => {
+    camera.initY = parseFloat(fieldWorldInitCamY.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitCamZ.addEventListener("input", () => {
+    camera.initZ = parseFloat(fieldWorldInitCamZ.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitCamR.addEventListener("input", () => {
+    camera.initR = parseFloat(fieldWorldInitCamR.value);
     updatePositionsToLatest();
 });
 
