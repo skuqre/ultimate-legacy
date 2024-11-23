@@ -582,8 +582,9 @@ function skipOrProgress() {
             // stop all talking models
             for (const i of Object.keys(characters)) {
                 if (!characters[i].talking) continue;
-                characters[i].player.playAnimationWithTrack(1, 'talk_end', true);
+                characters[i].player.playAnimationWithTrack(1, 'talk_end', false);
                 characters[i].player.queueNextEmpty(1, 4 / 60);
+                characters[i].player.animationState.setEmptyAnimation(1, 4/60);
                 characters[i].talking = false;
             }
 
@@ -618,7 +619,7 @@ function dialogueLoop(elapsed) {
                     if (!(curScenario[curDialogue].speakerModel in characters)) return;
                     if (!characters[curScenario[curDialogue].speakerModel].talking) return;
 
-                    characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(1, 'talk_end', true);
+                    characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(1, 'talk_end', false);
                     characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(1, 4 / 60);
                     characters[curScenario[curDialogue].speakerModel].talking = false;
                 }
@@ -852,7 +853,7 @@ function selectDialogueEntry(to) {
     // stop all talking models
     for (const i of Object.keys(characters)) {
         if (!characters[i].talking) continue;
-        characters[i].player.playAnimationWithTrack(1, 'talk_end', true);
+        characters[i].player.playAnimationWithTrack(1, 'talk_end', false);
         characters[i].player.queueNextEmpty(1, 4 / 60);
         characters[i].talking = false;
     }

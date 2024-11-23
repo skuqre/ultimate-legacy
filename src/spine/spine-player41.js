@@ -12415,18 +12415,12 @@ var spine41 = (() => {
         return percentageOrAbsolute;
       }
       calculateAnimationViewport(animation, viewport) {
-        if (animation.name.startsWith("talk_")) {
-          animation = this.animationState.getCurrent(0).animation; // calculate with track 0 bounds
-        }
-        if (animation.name.startsWith("action") || animation.name.startsWith("expression_")) {
-          animation = this.animationState.data.skeletonData.findAnimation("idle"); // calculate with idle bounds
-        }
         this.skeleton.setToSetupPose();
         let steps = 100, stepTime = animation.duration ? animation.duration / steps : 0, time = 0;
         let minX = 1e8, maxX = -1e8, minY = 1e8, maxY = -1e8;
         let offset = new Vector2(), size = new Vector2();
         for (let i = 0; i < steps; i++, time += stepTime) {
-          animation.apply(this.skeleton, time, time, false, [], 1, MixBlend.setup, MixDirection.mixIn);
+          // animation.apply(this.skeleton, time, time, false, [], 1, MixBlend.setup, MixDirection.mixIn);
           this.skeleton.updateWorldTransform();
           this.skeleton.getBounds(offset, size);
           if (!isNaN(offset.x) && !isNaN(offset.y) && !isNaN(size.x) && !isNaN(size.y)) {
