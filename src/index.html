@@ -334,13 +334,20 @@
             <h2>NKAS Catalog</h2>
             <div class="input-tray">
                 <input type="text" name="" id="model-search-query" placeholder="🔎">
-                <div class="generic-button white">Refresh</div>
+                <div class="generic-button white" id="model-search-refresh">Refresh</div>
             </div>
             <div class="generic-list alternating" id="model-search-list">
             </div>
             <div class="popup-button-tray">
                 <div class="button green" id="model-search-exit">Reload</div>
             </div>
+        </div>
+    </div>
+
+    <div class="generic-popup" id="loading-screen" style="display: none;">
+        <div>
+            <h1><i class='bx bx-loader-alt bx-spin'></i></h1>
+            <span id="loading-text">Loading...</span>
         </div>
     </div>
 

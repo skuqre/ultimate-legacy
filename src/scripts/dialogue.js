@@ -16,7 +16,7 @@ const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
 var camera = {
-    initX: 1920 * 0.125,
+    initX: 1920 * 0.5,
     initY: 1080 * 0.5,
     initZ: 1.0,
     initR: 0,
@@ -105,8 +105,7 @@ function parseDialogue(noTalk = false) {
             // set text
             setText(entry.content);
 
-            // set emotion (and make model talk)
-            if (entry.speakerModel !== null) {
+            if (entry.speakerModel !== null && entry.speakerModel.trim().length > 0) {
                 if (!(entry.speakerModel in characters)) return;
 
                 const characterModel = characters[entry.speakerModel];
@@ -659,6 +658,7 @@ function cameraLoop(elapsed) {
  * Init
  */
 function init() {
+    document.getElementById("loading-screen").style.display = "";
 
     for (const i of curCharacters) {
         createCharacter(i.id, i.ver, i.initAnimation, i.initTransforms.x, i.initTransforms.y, null, i.customPath);
@@ -668,6 +668,8 @@ function init() {
 
     const loadInterval = setInterval(() => {
         charsLoaded = Object.values(characters).filter(a => a.loaded);
+        document.getElementById("loading-text").innerHTML = `Loading characters... (${charsLoaded.length}/${Object.values(characters).length})`;
+
         if (charsLoaded.length === Object.values(characters).length) {
             parseDialogue();
 
@@ -680,6 +682,7 @@ function init() {
             initPositions();
 
             hasLoaded = true;
+            document.getElementById("loading-screen").style.display = "none";
 
             clearInterval(loadInterval);
         }
@@ -840,7 +843,10 @@ function updateDialogueList() {
 }
 
 function selectDialogueEntry(to) {
-    if (curScenario.length === 0) return;
+    if (curScenario.length === 0){
+        updateEditPanel();
+        return
+    }
     
     curSelectedEntry = to;
 
@@ -906,7 +912,7 @@ dialogueDel.addEventListener("click", () => {
     curScenario.splice(curSelectedEntry, 1);
 
     updateDialogueList();
-    selectDialogueEntry(curScenario.length - 1);
+    selectDialogueEntry(0);
 });
 
 var curSelectedCharacter = null;
@@ -925,6 +931,7 @@ const modelLoadMenu = document.getElementById("model-load");
 const modelLoadList = document.getElementById("model-load-list");
 
 const modelSearchQuery = document.getElementById("model-search-query");
+const modelSearchRefresh = document.getElementById("model-search-refresh");
 const modelSearchMenu = document.getElementById("model-search");
 const modelSearchList = document.getElementById("model-search-list");
 const modelSearchExit = document.getElementById("model-search-exit");
@@ -1015,13 +1022,34 @@ function updateModelList(a) {
     modelSearchList.innerHTML = "";
 
     for (const i of a) {
+        const immut = i;
+
         const div = document.createElement("div");
         div.classList.add("generic-list-item");
         div.classList.add("dialogue-entry");
+        div.style.justifyContent = "space-between";
 
         const span = document.createElement("span");
         span.innerHTML = `<b>${i}</b> (${invertedModels[i]})`;
         div.appendChild(span);
+
+        const img = document.createElement("img");
+        img.classList.add("list-item-pre-bg");
+        img.setAttribute("draggable", false);
+        img.src = "https://nkas.pages.dev/characters/si_" + invertedModels[immut] + "_s.png";
+        img.onerror = () => {
+            img.style.display = "none";
+        }
+        div.appendChild(img);
+
+        const img2 = document.createElement("img");
+        img2.classList.add("list-item-pre");
+        img2.setAttribute("draggable", false);
+        img2.src = "https://nkas.pages.dev/characters/si_" + invertedModels[immut] + "_s.png";
+        img2.onerror = () => {
+            img2.style.display = "none";
+        }
+        div.appendChild(img2);
 
         const tray = document.createElement("div");
         tray.classList.add("button-tray");
@@ -1031,25 +1059,27 @@ function updateModelList(a) {
         button.classList.add("green");
         button.innerHTML = `<i class="bx bx-plus"></i>`;
 
-        const immut = i;
         button.onclick = async () => {
+            if (button.getAttribute("active") == "false") return;
             modelsAdding += 1;
 
             button.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
+            button.setAttribute("active", false);
 
-            console.log("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/data.json");
             const req = await fetch("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/data.json");
             const json = await req.json();
 
+            const dupes = curCharacters.filter(e => e.id.startsWith(invertedModels[immut]));
+
             curCharacters.push({
-                id: invertedModels[immut],
+                id: invertedModels[immut] + (dupes.length > 0 ? "_" + dupes.length : ""),
                 type: "character",
                 name: immut,
                 ver: json.ver,
                 initAnimation: "idle",
                 initVariant: null,
                 initTransforms: {
-                    x: 240,
+                    x: 1920 * 0.5,
                     y: 1080 * 0.9,
                     rotate: 0,
                     scale: 1,
@@ -1059,6 +1089,8 @@ function updateModelList(a) {
             });
 
             button.innerHTML = `<i class="bx bx-plus"></i>`;
+            button.setAttribute("active", true);
+
             modelsAdding -= 1;
         }
 
@@ -1093,12 +1125,12 @@ modelAddSearch.addEventListener("click", () => {
 
     if (curNKASModels === null) {
         getModelFromNKAS()
-        .then(() => {
-            updateModelList(Object.values(curNKASModels));
-        })
-        .catch((e) => {
-            console.log("Error...", e)
-        });
+            .then(() => {
+                updateModelList(Object.values(curNKASModels));
+            })
+            .catch((e) => {
+                console.log("Error...", e)
+            });
     }
 });
 
@@ -1113,7 +1145,21 @@ modelSearchQuery.addEventListener("input", () => {
     updateModelList(resultStrings);
 });
 
+modelSearchRefresh.addEventListener("click", () => {
+    modelSearchList.innerHTML = "";
+
+    getModelFromNKAS()
+        .then(() => {
+            updateModelList(Object.values(curNKASModels));
+        })
+        .catch((e) => {
+            console.log("Error...", e)
+        });
+});
+
 modelSearchExit.addEventListener("click", () => {
+    if (modelsAdding > 0) return;
+
     modelAddMain.style.display = "none";
     modelAddSelector.style.display = "none";
     modelLoadMenu.style.display = "none";

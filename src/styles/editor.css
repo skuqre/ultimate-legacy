@@ -255,6 +255,7 @@ div.generic-list-item {
     min-height: 64px;
     height: min-content;
     border-bottom: 1px solid var(--darker);
+    overflow: clip;
 }
 
 div.dialogue-entry {
@@ -495,4 +496,27 @@ div.input-tray {
     display: flex;
     flex-direction: row;
     gap: 4px;
+}
+
+img.list-item-pre-bg {
+    position: absolute;
+    left: 72%;
+    top: 75%;
+    transform: translate(-50%, -50%);
+    mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(255,255,255,1) 80%, rgba(0,0,0,0) 100%);
+    scale: 2;
+    opacity: 0.4;
+}
+
+img.list-item-pre {
+    position: absolute;
+    left: 70%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(255,255,255,1) 20%, rgba(255,255,255,1) 80%, rgba(0,0,0,0) 100%);
+}
+
+div#loading-screen {
+    z-index: 999;
+    text-align: center;
 }
