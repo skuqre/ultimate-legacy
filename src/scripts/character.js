@@ -8,7 +8,7 @@ let characters = {};
 
 function deleteCharacter(id) {
     if (characters[id] !== undefined) {
-        characters[id].element.dispose();
+        // characters[id].element.dispose();
         characters[id].wrapper.remove();
         delete characters[id];
     }

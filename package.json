@@ -12,6 +12,7 @@
     "electron": "^31.1.0"
   },
   "dependencies": {
-    "@tweenjs/tween.js": "^25.0.0"
+    "@tweenjs/tween.js": "^25.0.0",
+    "fuzzysort": "^3.1.0"
   }
 }

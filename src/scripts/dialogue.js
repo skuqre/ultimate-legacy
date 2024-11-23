@@ -3,6 +3,7 @@ This script handles dialogue playback and editor logic.
 */
 
 const { Tween, Easing } = require("@tweenjs/tween.js");
+const fuzzysort = require("fuzzysort");
 
 var inEditor = true;
 var hasLoaded = false;
@@ -24,102 +25,9 @@ var camera = {
     z: 1.0,
     r: 0
 }
-var curColorDefinitions = {
-    "Anis": "#f5ba36",
-    "Rapi": "#ff0000",
-    "Neon": "#0000ff"
-}
-var curCharacters = [
-    {
-        id: "c011",
-        type: "character",
-        name: "Neon",
-        ver: 4.0,
-        initAnimation: "idle",
-        initVariant: null,
-        initTransforms: {
-            x: 1920 * (0.525 + 0.3),
-            y: 1080 * 0.95,
-            rotate: 0,
-            scale: 1,
-            opacity: 1
-        },
-        customPath: "https://nikke-db-legacy.pages.dev/l2d/c011/c011_00"
-    },
-    {
-        id: "c010",
-        type: "character",
-        name: "Rapi",
-        ver: 4.0,
-        initAnimation: "idle",
-        initVariant: null,
-        initTransforms: {
-            x: 1920 * (0.525 - 0.4),
-            y: 1080 * 0.95,
-            rotate: 0,
-            scale: 1,
-            opacity: 1
-        },
-        customPath: "https://nikke-db-legacy.pages.dev/l2d/c010/c010_00"
-    },
-    {
-        id: "c012",
-        type: "character",
-        name: "Anis",
-        ver: 4.0,
-        initAnimation: "idle",
-        initVariant: null,
-        initTransforms: {
-            x: 1920 * 0.525,
-            y: 1080 * 0.95,
-            rotate: 0,
-            scale: 1,
-            opacity: 1
-        },
-        customPath: "https://nikke-db-legacy.pages.dev/l2d/c012/c012_00"
-    },
-]
-var curScenario = [
-    {
-    	"type": "Speech",
-    	"speaker": "Rapi",
-        "speakerModel": "c010",
-        "speakerModelEmotion": "idle",
-        "focusX": true,
-        "focusY": false,
-        "focusDur": 1,
-    	"content": "I want a cheeseburger.",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    },
-    {
-    	"type": "Speech",
-    	"speaker": "Anis",
-        "speakerModel": "c012",
-        "speakerModelEmotion": "idle",
-        "focusX": true,
-        "focusY": false,
-        "focusDur": 1,
-    	"content": "Me too.",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    },
-    {
-    	"type": "Speech",
-    	"speaker": "Neon",
-        "speakerModel": "c011",
-        "speakerModelEmotion": "idle",
-        "focusX": true,
-        "focusY": false,
-        "focusDur": 1,
-    	"content": "Me three.",
-    	"keyframes": [],
-    	"time": null,
-    	"choices": null
-    }
-];
+var curColorDefinitions = {}
+var curCharacters = [];
+var curScenario = [];
 var curDialogue = 0;
 
 var curScenarioHidden = false;
@@ -201,8 +109,10 @@ function parseDialogue(noTalk = false) {
             if (entry.speakerModel !== null) {
                 if (!(entry.speakerModel in characters)) return;
 
+                const characterModel = characters[entry.speakerModel];
+
                 // move model to the top most layer by removing then appending
-                const characterElement = characters[entry.speakerModel].wrapper;
+                const characterElement = characterModel.wrapper;
                 characterLayer.removeChild(characterElement);
                 characterLayer.appendChild(characterElement);
 
@@ -221,20 +131,20 @@ function parseDialogue(noTalk = false) {
                 tweens.push(scaleTween);
 
                 if (!noTalk) {
-                    if (characters[entry.speakerModel].emotion !== entry.speakerModelEmotion) {
-                        characters[entry.speakerModel].player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
-                        characters[entry.speakerModel].emotion = entry.speakerModelEmotion;
+                    if (characterModel.emotion !== entry.speakerModelEmotion) {
+                        characterModel.player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
+                        characterModel.emotion = entry.speakerModelEmotion;
                     }
 
-                    characters[entry.speakerModel].player.playAnimationWithTrack(1, "talk_start", true);
-                    characters[entry.speakerModel].talking = true;
+                    characterModel.player.playAnimationWithTrack(1, "talk_start", true);
+                    characterModel.talking = true;
                 }
 
                 if (entry.focusX || entry.focusY) {
                     const tween = new Tween(camera)
                         .to({
-                            x: entry.focusX ? characters[entry.speakerModel].transforms.x : camera.x,
-                            y: entry.focusY ? characters[entry.speakerModel].transforms.y : camera.y,
+                            x: entry.focusX ? characterModel.transforms.x : camera.x,
+                            y: entry.focusY ? characterModel.transforms.y : camera.y,
                         }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
                         .easing(Easing.Sinusoidal.InOut)
                         .start()
@@ -858,12 +768,10 @@ window.addEventListener("mouseup", (e) => {
 //
 var curSelectedEntry = null;
 var curEntries = [];
-
-var curSelectedCharacter = null;
-var curCharEntries = [];
-
 const editorDialogueList = document.getElementById("editor-dialogue-list");
-const editorCharacterList = document.getElementById("editor-character-list");
+
+const dialogueAdd = document.getElementById("dialogue-add");
+const dialogueDel = document.getElementById("dialogue-del");
 
 function updateDialogueList() {
     editorDialogueList.innerHTML = "";
@@ -878,11 +786,6 @@ function updateDialogueList() {
         let content = "";
         let iconclass = "";
         switch (i.type) {
-            case "Speech":
-                speaker = i.speaker;
-                content = i.content;
-                iconclass = "bx bxs-message-dots";
-                break;
             case "Monologue":
                 speaker = "";
                 content = i.content;
@@ -898,6 +801,11 @@ function updateDialogueList() {
                 content = "<code>" + i.choices.map(e => e.text).join("</code><br><code>") + "</code>";
                 iconclass = "bx bxs-message-dots bx-flip-horizontal";
                 break;
+            default:
+                speaker = i.speaker;
+                content = i.content;
+                iconclass = "bx bxs-message-dots";
+                break;
         }
 
         const icon = document.createElement("i");
@@ -905,13 +813,14 @@ function updateDialogueList() {
             icon.classList.add(i);
         }
         icon.style.color = "white";
-        if (i.speaker in curColorDefinitions) {
+        if (i.speaker in curColorDefinitions && i.type === "Speech") {
             icon.style.color = curColorDefinitions[i.speaker];
         }
         div.appendChild(icon);
         
+        const colonCondition = speaker.trim().length > 0 && content.trim().length > 0;
         const span = document.createElement("span");
-        span.innerHTML = (!["Monologue", "Narration", "Choice"].includes(i.type) ? `<b>${speaker}</b>: ` : "") + `${content}`;
+        span.innerHTML = (!["Monologue", "Narration", "Choice"].includes(i.type) ? `<b>${speaker}</b>` : "") + (colonCondition ? ": " : "") + `${content}`;
         div.appendChild(span);
 
         const highlight = document.createElement("div");
@@ -930,6 +839,8 @@ function updateDialogueList() {
 }
 
 function selectDialogueEntry(to) {
+    if (curScenario.length === 0) return;
+    
     curSelectedEntry = to;
 
     for (const i of curEntries) {
@@ -970,6 +881,55 @@ function selectDialogueEntry(to) {
 
     updateEditPanel();
 }
+
+dialogueAdd.addEventListener("click", () => {
+    curScenario.push({
+    	type: "",
+    	speaker: "",
+        speakerModel: "",
+        speakerModelEmotion: "",
+        focusX: true,
+        focusY: false,
+        focusDur: 1,
+    	content: "",
+    	keyframes: [],
+    	time: null,
+    	choices: null
+    });
+
+    updateDialogueList();
+    selectDialogueEntry(curScenario.length - 1);
+});
+
+dialogueDel.addEventListener("click", () => {
+    curScenario.splice(curSelectedEntry, 1);
+
+    updateDialogueList();
+    selectDialogueEntry(curScenario.length - 1);
+});
+
+var curSelectedCharacter = null;
+var curCharEntries = [];
+const editorCharacterList = document.getElementById("editor-character-list");
+
+const characterAdd = document.getElementById("character-add");
+const characterDel = document.getElementById("character-del");
+
+const modelAddMain = document.getElementById("modeladd-main");
+const modelAddSelector = document.getElementById("modeladd-selector");
+const modelAddLoad = document.getElementById("modeladd-load");
+const modelAddSearch = document.getElementById("modeladd-search");
+
+const modelLoadMenu = document.getElementById("model-load");
+const modelLoadList = document.getElementById("model-load-list");
+
+const modelSearchQuery = document.getElementById("model-search-query");
+const modelSearchMenu = document.getElementById("model-search");
+const modelSearchList = document.getElementById("model-search-list");
+const modelSearchExit = document.getElementById("model-search-exit");
+
+let curNKASModels = null;
+let invertedModels = null;
 
 function updateCharacterList() {
     editorCharacterList.innerHTML = "";
@@ -1036,6 +996,135 @@ function selectCharacterEntry(to) {
     updateInspectorPanel();
 }
 
+async function getModelFromNKAS() {
+    const req = await fetch("https://nkas-l2d.pages.dev/characters.json");
+    const json = await req.json();
+
+    curNKASModels = json;
+    invertedModels = {};
+
+    for (const i of Object.keys(curNKASModels)) {
+        invertedModels[curNKASModels[i]] = i;
+    }
+}
+
+let modelsAdding = 0;
+
+function updateModelList(a) {
+    modelSearchList.innerHTML = "";
+
+    for (const i of a) {
+        const div = document.createElement("div");
+        div.classList.add("generic-list-item");
+        div.classList.add("dialogue-entry");
+
+        const span = document.createElement("span");
+        span.innerHTML = `<b>${i}</b> (${invertedModels[i]})`;
+        div.appendChild(span);
+
+        const tray = document.createElement("div");
+        tray.classList.add("button-tray");
+
+        const button = document.createElement("div");
+        button.classList.add("button");
+        button.classList.add("green");
+        button.innerHTML = `<i class="bx bx-plus"></i>`;
+
+        const immut = i;
+        button.onclick = async () => {
+            modelsAdding += 1;
+
+            button.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
+
+            console.log("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/data.json");
+            const req = await fetch("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/data.json");
+            const json = await req.json();
+
+            curCharacters.push({
+                id: invertedModels[immut],
+                type: "character",
+                name: immut,
+                ver: json.ver,
+                initAnimation: "idle",
+                initVariant: null,
+                initTransforms: {
+                    x: 240,
+                    y: 1080 * 0.9,
+                    rotate: 0,
+                    scale: 1,
+                    opacity: 1
+                },
+                customPath: "https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/" + invertedModels[immut]
+            });
+
+            button.innerHTML = `<i class="bx bx-plus"></i>`;
+            modelsAdding -= 1;
+        }
+
+        tray.appendChild(button);
+        div.appendChild(tray);
+
+        modelSearchList.appendChild(div);
+    }
+
+
+}
+
+characterAdd.addEventListener("click", () => {
+    modelAddMain.style.display = "flex";
+    modelAddSelector.style.display = "flex";
+});
+
+characterDel.addEventListener("click", () => {
+
+});
+
+modelAddLoad.addEventListener("click", () => {
+    modelAddSelector.style.display = "none";
+    modelLoadMenu.style.display = "flex";
+    modelSearchMenu.style.display = "none";
+});
+
+modelAddSearch.addEventListener("click", () => {
+    modelAddSelector.style.display = "none";
+    modelLoadMenu.style.display = "none";
+    modelSearchMenu.style.display = "flex";
+
+    if (curNKASModels === null) {
+        getModelFromNKAS()
+        .then(() => {
+            updateModelList(Object.values(curNKASModels));
+        })
+        .catch((e) => {
+            console.log("Error...", e)
+        });
+    }
+});
+
+modelSearchQuery.addEventListener("input", () => {
+    const results = fuzzysort.go(modelSearchQuery.value.trim(), Object.values(curNKASModels), {all: true});
+    const resultStrings = [];
+
+    for (const i of results) {
+        resultStrings.push(i.target);
+    }
+
+    updateModelList(resultStrings);
+});
+
+modelSearchExit.addEventListener("click", () => {
+    modelAddMain.style.display = "none";
+    modelAddSelector.style.display = "none";
+    modelLoadMenu.style.display = "none";
+    modelSearchMenu.style.display = "none";
+
+    hasLoaded = false;
+    init();
+})
+
+const editorList = document.getElementById("editor-edit-list");
+const editorInst = document.getElementById("editor-edit-inst");
+
 const fieldDialogueType = document.getElementById("field-dialogue-type");
 
 const fieldDialogueName = document.getElementById("field-dialogue-name");
@@ -1053,6 +1142,15 @@ const fieldMonologueContent = document.getElementById("field-dialogue-mcontent")
 
 function updateEditPanel() {
     const entry = curScenario[curDialogue];
+
+    if (!entry) {
+        editorList.style.display = "none";
+        editorInst.style.display = "";
+        return;
+    } else {
+        editorList.style.display = "";
+        editorInst.style.display = "none";
+    }
 
     fieldDialogueType.value = entry.type;
 
@@ -1087,15 +1185,19 @@ function updateEditPanel() {
             fieldDialogueCharacter.value = entry.speakerModel;
 
             fieldDialogueEmotion.innerHTML = "";
-            for (const i of characters[entry.speakerModel].emotions) {
-                if (i.trim().toLowerCase() === "talk_start" || 
-                    i.trim().toLowerCase() === "talk_end") continue;
-                
-                const option = document.createElement("option");
-                option.value = i;
-                option.innerHTML = i;
-                fieldDialogueEmotion.appendChild(option);
+            
+            if (characters[entry.speakerModel]) {
+                for (const i of characters[entry.speakerModel].emotions) {
+                    if (i.trim().toLowerCase() === "talk_start" || 
+                        i.trim().toLowerCase() === "talk_end") continue;
+                    
+                    const option = document.createElement("option");
+                    option.value = i;
+                    option.innerHTML = i;
+                    fieldDialogueEmotion.appendChild(option);
+                }
             }
+
             fieldDialogueEmotion.value = entry.speakerModelEmotion;
             
             fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";

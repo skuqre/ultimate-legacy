@@ -109,7 +109,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="generic-panel" id="editor-edit-list">
+                <div class="generic-panel" id="editor-inspector-list">
 
                     <div class="field-group-character">
                         <b>Character ID (read-only)</b>
@@ -195,7 +195,8 @@
                 <div class="generic-header">
                     <span>Edit</span>
                 </div>
-                <div class="generic-panel" id="editor-edit-list">
+
+                <div class="generic-panel" id="editor-edit-list" style="display: none;">
                     <div>
                         <b>Type</b>
                         <select id="field-dialogue-type">
@@ -227,6 +228,17 @@
                         </div>
                     </div>
                     <div class="field-group-speech field-double stretchy">
+                        <b>Focus to X</b>
+                        <input type="number" id="field-dialogue-foctox">
+                    </div>
+                    <div class="field-group-speech field-double stretchy">
+                        <b>Focus to Y</b>
+                        <input type="number" id="field-dialogue-foctoy">
+                    </div>
+                    <div class="field-group-speech">
+                        <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match current model position</div>
+                    </div>
+                    <div class="field-group-speech field-double stretchy">
                         <b>Duration (seconds)</b>
                         <input type="number" id="field-dialogue-focd" step="0.1" value="0.5" min="0">
                     </div>
@@ -253,6 +265,9 @@
                     </div>
 
                     <hr>
+                </div>
+                <div class="generic-panel" id="editor-edit-inst">
+                    <span>Select a dialogue entry to get started.</span>
                 </div>
             </div>
         </div>
@@ -286,6 +301,45 @@
             <div class="generic-list alternating" id="colordef-list"></div>
             <div class="popup-button-tray">
                 <div class="button green" id="colordef-save">Save</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="generic-popup" id="modeladd-main" style="display: none;">
+        <div class="popup-main" id="modeladd-selector" style="display: flex;">
+            <h2>Add Model</h2>
+            <span>
+                A model is typically 3 or more files. It is a <code>.skel</code>, <code>.atlas</code>, and one or more <code>.png</code>
+                file trio that work together to make a moving image.
+            </span>
+            <hr>
+            <div class="generic-button white fullwidth" id="modeladd-search"><i class="bx bx-search"></i> &nbsp; Look through NKAS</div>
+            <span>Look for a model through the NKAS catalog.</span>
+            <hr>
+            <div class="generic-button white fullwidth" id="modeladd-load"><i class="bx bx-folder"></i> &nbsp; Locally loaded files</div>
+            <span>Look through locally loaded files, or load new ones.</span>
+        </div>
+
+        <div class="popup-main" id="model-load" style="width: 70%; max-width: unset; display: none;">
+            <h2>Loaded Models</h2>
+            <div class="generic-list alternating" id="model-load-list">
+            </div>
+            <div class="popup-button-tray">
+                <div class="button green" id="model-loader" style="width: max-content;">Load new model</div>
+                <div class="button white" id="model-folder" style="width: max-content;">Open Folder</div>
+            </div>
+        </div>
+
+        <div class="popup-main" id="model-search" style="width: 70%; max-width: unset; display: none;">
+            <h2>NKAS Catalog</h2>
+            <div class="input-tray">
+                <input type="text" name="" id="model-search-query" placeholder="🔎">
+                <div class="generic-button white">Refresh</div>
+            </div>
+            <div class="generic-list alternating" id="model-search-list">
+            </div>
+            <div class="popup-button-tray">
+                <div class="button green" id="model-search-exit">Reload</div>
             </div>
         </div>
     </div>

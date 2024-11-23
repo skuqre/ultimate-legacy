@@ -215,6 +215,11 @@ input[type="text"] {
     height: 32px;
 }
 
+input.fullwidth {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 textarea#field-dialogue-content,
 textarea#field-dialogue-ncontent,
 textarea#field-dialogue-mcontent {
@@ -477,4 +482,17 @@ div#viewport-edit-main {
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
+}
+
+div#model-load-list, div#model-search-list {
+    height: 60vh;
+    border: 1px solid var(--dark);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+div.input-tray {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
 }
