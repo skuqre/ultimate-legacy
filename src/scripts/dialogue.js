@@ -69,10 +69,16 @@ var layerBackground = document.getElementById("layer-background");
 var layerCharacter = document.getElementById("layer-character");
 
 function parseDialogue(noTalk = false) {
-    if (curDialogue > curScenario.length - 1) return; // quit
     if (curDialogue === 0) {
         initPositions();
     }
+
+    if (curScenario.length === 0) {
+        initPositions();
+        return;
+    }
+
+    if (curDialogue > curScenario.length - 1) return; // quit
 
     const entry = curScenario[curDialogue];
     curDialogueState = entry.type.toLowerCase();
@@ -654,11 +660,14 @@ function cameraLoop(elapsed) {
     `
 }
 
+const loadingScreen = document.getElementById("loading-screen");
+const loadingText = document.getElementById("loading-text");
+
 /**
  * Init
  */
 function init() {
-    document.getElementById("loading-screen").style.display = "";
+    loadingScreen.style.display = "";
 
     for (const i of curCharacters) {
         createCharacter(i.id, i.ver, i.initAnimation, i.initTransforms.x, i.initTransforms.y, null, i.customPath);
@@ -668,7 +677,7 @@ function init() {
 
     const loadInterval = setInterval(() => {
         charsLoaded = Object.values(characters).filter(a => a.loaded);
-        document.getElementById("loading-text").innerHTML = `Loading characters... (${charsLoaded.length}/${Object.values(characters).length})`;
+        loadingText.innerHTML = `Loading characters... (${charsLoaded.length}/${Object.values(characters).length})`;
 
         if (charsLoaded.length === Object.values(characters).length) {
             parseDialogue();
@@ -682,7 +691,7 @@ function init() {
             initPositions();
 
             hasLoaded = true;
-            document.getElementById("loading-screen").style.display = "none";
+            loadingScreen.style.display = "none";
 
             clearInterval(loadInterval);
         }
@@ -728,7 +737,7 @@ function updatePositionsToLatest() {
             tweens.splice(0, 1);
         }
         
-        if (curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
+        if (curScenario[curDialogue] !== undefined && curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
             skipOrProgress();
         }
     }
@@ -1109,7 +1118,13 @@ characterAdd.addEventListener("click", () => {
 });
 
 characterDel.addEventListener("click", () => {
+    if (curSelectedCharacter === null) return;
 
+    deleteCharacter(curSelectedCharacter);
+    curCharacters = curCharacters.filter((e) => e.id !== curSelectedCharacter);
+
+    updateCharacterList();
+    selectCharacterEntry(null); 
 });
 
 modelAddLoad.addEventListener("click", () => {
@@ -1595,6 +1610,7 @@ fieldCharacterInitAnim.addEventListener("input", () => {
         character.initAnimation = null;
     }
 
+    parseDialogue(true);
     selectCharacterEntry(curSelectedCharacter);
     selectDialogueEntry(curSelectedEntry);
 });

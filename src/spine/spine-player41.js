@@ -12493,7 +12493,7 @@ var spine41 = (() => {
               }
             }
             renderer.camera.zoom = this.canvas.height / this.canvas.width > viewport.height / viewport.width ? viewport.width / this.canvas.width : viewport.height / this.canvas.height;
-            renderer.camera.zoom *= this.zoomMultiplier;
+            renderer.camera.zoom *= this.zoomMultiplier / 0.5;
             renderer.camera.position.x = viewport.x + viewport.width / 2;
             renderer.camera.position.y = viewport.y + viewport.height / 2;
 
