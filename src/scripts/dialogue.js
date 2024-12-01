@@ -122,6 +122,7 @@ function parseDialogue(noTalk = false) {
                 characterLayer.appendChild(characterElement);
 
                 // make model size up like the game does for some reason???
+                /*
                 const characterWrappers = [...document.getElementsByClassName("character-spine")];
                 for (const i of characterWrappers) {
                     i.style.setProperty("--scale-num", "1.0");
@@ -134,9 +135,10 @@ function parseDialogue(noTalk = false) {
                     })
                     .start();
                 tweens.push(scaleTween);
+                */
 
                 if (!noTalk) {
-                    if (characterModel.emotion !== entry.speakerModelEmotion) {
+                    if (characterModel.emotion !== entry.speakerModelEmotion && entry.speakerModelEmotion !== null) {
                         characterModel.player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
                         characterModel.emotion = entry.speakerModelEmotion;
                     }
@@ -144,17 +146,17 @@ function parseDialogue(noTalk = false) {
                     characterModel.player.playAnimationWithTrack(1, "talk_start", true);
                     characterModel.talking = true;
                 }
+            }
 
-                if (entry.focusX || entry.focusY) {
-                    const tween = new Tween(camera)
-                        .to({
-                            x: entry.focusX ? characterModel.transforms.x : camera.x,
-                            y: entry.focusY ? characterModel.transforms.y : camera.y,
-                        }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
-                        .easing(Easing.Sinusoidal.InOut)
-                        .start()
-                    tweens.push(tween);
-                }
+            if (entry.focusX || entry.focusY) {
+                const tween = new Tween(camera)
+                    .to({
+                        x: entry.focusX ? entry.focusPosX : camera.x,
+                        y: entry.focusY ? entry.focusPosY : camera.y,
+                    }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
+                    .easing(Easing.Sinusoidal.InOut)
+                    .start()
+                tweens.push(tween);
             }
         
             curDialogueCurTime = 0.0;
@@ -821,6 +823,8 @@ function updateDialogueList() {
                 break;
         }
 
+        speaker = speaker === null ? "" : speaker;
+
         const icon = document.createElement("i");
         for (const i of iconclass.split(" ")) {
             icon.classList.add(i);
@@ -902,11 +906,13 @@ dialogueAdd.addEventListener("click", () => {
     curScenario.push({
     	type: "",
     	speaker: "",
-        speakerModel: "",
-        speakerModelEmotion: "",
+        speakerModel: null,
+        speakerModelEmotion: null,
         focusX: true,
         focusY: false,
         focusDur: 1,
+        focusPosX: 1920 / 2,
+        focusPosY: 1080 / 2,
     	content: "",
     	keyframes: [],
     	time: null,
@@ -1198,6 +1204,9 @@ const fieldDialogueMatchInit = document.getElementById("field-dialogue-matchinit
 const fieldDialogueFocusX = document.getElementById("field-dialogue-focx");
 const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
 const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
+const fieldDialogueFocusPosX = document.getElementById("field-dialogue-foctox");
+const fieldDialogueFocusPosY = document.getElementById("field-dialogue-foctoy");
+const fieldDialogueMatchPos = document.getElementById("field-dialogue-matchpos");
 
 const fieldNarrationContent = document.getElementById("field-dialogue-ncontent");
 const fieldMonologueContent = document.getElementById("field-dialogue-mcontent");
@@ -1237,34 +1246,60 @@ function updateEditPanel() {
             fieldDialogueName.value = entry.speaker;
             fieldDialogueContent.value = entry.content;
 
-            fieldDialogueCharacter.innerHTML = "";
+            fieldDialogueCharacter.innerHTML = "<option value=\"none\">None</option>";
             for (const i of curCharacters) {
                 const option = document.createElement("option");
                 option.value = i.id;
                 option.innerHTML = `${i.name} (${i.id})`;
                 fieldDialogueCharacter.appendChild(option);
             }
-            fieldDialogueCharacter.value = entry.speakerModel;
+            fieldDialogueCharacter.value = entry.speakerModel === null ? "none" : entry.speakerModel;
 
-            fieldDialogueEmotion.innerHTML = "";
-            
-            if (characters[entry.speakerModel]) {
-                for (const i of characters[entry.speakerModel].emotions) {
-                    if (i.trim().toLowerCase() === "talk_start" || 
-                        i.trim().toLowerCase() === "talk_end") continue;
-                    
-                    const option = document.createElement("option");
-                    option.value = i;
-                    option.innerHTML = i;
-                    fieldDialogueEmotion.appendChild(option);
+            if (entry.speakerModel !== null) {
+                fieldDialogueEmotion.innerHTML = "";
+
+                fieldDialogueEmotion.removeAttribute("disabled");
+                fieldDialogueMatchPos.removeAttribute("disabled");
+                fieldDialogueMatchInit.removeAttribute("disabled");
+
+                if (characters[entry.speakerModel]) {
+                    for (const i of characters[entry.speakerModel].emotions) {
+                        if (i.trim().toLowerCase() === "talk_start" || 
+                            i.trim().toLowerCase() === "talk_end") continue;
+                        
+                        const option = document.createElement("option");
+                        option.value = i;
+                        option.innerHTML = i;
+                        fieldDialogueEmotion.appendChild(option);
+                    }
                 }
+    
+                fieldDialogueEmotion.value = entry.speakerModelEmotion;
+            } else {
+                fieldDialogueEmotion.innerHTML = "<option selected value=\"none\">No model selected</option>";
+
+                fieldDialogueEmotion.setAttribute("disabled", "");
+                fieldDialogueMatchPos.setAttribute("disabled", "");
+                fieldDialogueMatchInit.setAttribute("disabled", "");
             }
 
-            fieldDialogueEmotion.value = entry.speakerModelEmotion;
-            
             fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
             fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
+            fieldDialogueFocusPosX.value = entry.focusPosX;
+            fieldDialogueFocusPosY.value = entry.focusPosY;
             fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
+
+            if (entry.focusX) {
+                fieldDialogueFocusPosX.removeAttribute("disabled");
+            } else {
+                fieldDialogueFocusPosX.setAttribute("disabled", "");
+            }
+
+            if (entry.focusY) {
+                fieldDialogueFocusPosY.removeAttribute("disabled");
+            } else {
+                fieldDialogueFocusPosY.setAttribute("disabled", "");
+            }
 
             break;
         case "Choice":
@@ -1370,9 +1405,9 @@ fieldDialogueType.addEventListener("input", () => {
             if (entry.speaker === null)
                 entry.speaker = "";
             if (entry.speakerModel === null)
-                entry.speaker = "";
+                entry.speaker = null;
             if (entry.speakerModelEmotion === null)
-                entry.speakerModelEmotion = "";
+                entry.speakerModelEmotion = null;
             if (entry.content === null)
                 entry.content = "";
 
@@ -1426,19 +1461,22 @@ fieldDialogueContent.addEventListener("change", () => {
 fieldDialogueCharacter.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
-    entry.speakerModel = fieldDialogueCharacter.value;
+    entry.speakerModel = fieldDialogueCharacter.value === "none" ? null : fieldDialogueCharacter.value;
 
-    fieldDialogueEmotion.innerHTML = "";
-    for (const i of characters[entry.speakerModel].emotions) {
-        if (i.trim().toLowerCase() === "talk_start" || 
-            i.trim().toLowerCase() === "talk_end") continue;
-        
-        const option = document.createElement("option");
-        option.value = i;
-        option.innerHTML = i;
-        fieldDialogueEmotion.appendChild(option);
+    if (entry.speakerModel !== null) {
+        fieldDialogueEmotion.innerHTML = "";
+
+        for (const i of characters[entry.speakerModel].emotions) {
+            if (i.trim().toLowerCase() === "talk_start" || 
+                i.trim().toLowerCase() === "talk_end") continue;
+            
+            const option = document.createElement("option");
+            option.value = i;
+            option.innerHTML = i;
+            fieldDialogueEmotion.appendChild(option);
+        }
+        fieldDialogueEmotion.value = entry.speakerModelEmotion;
     }
-    fieldDialogueEmotion.value = entry.speakerModelEmotion;
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
@@ -1476,6 +1514,37 @@ fieldDialogueFocusY.addEventListener("click", () => {
     const entry = curScenario[curDialogue];
 
     entry.focusY = !entry.focusY;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFocusPosX.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusPosX = parseInt(fieldDialogueFocusPosX.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFocusPosY.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusPosY = parseInt(fieldDialogueFocusPosY.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueMatchPos.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    if (!characters[entry.speakerModel]) return;
+    const characterModel = characters[entry.speakerModel];
+
+    entry.focusPosX = characterModel.transforms.x;
+    entry.focusPosY = characterModel.transforms.y;
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);

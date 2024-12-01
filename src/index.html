@@ -210,7 +210,9 @@
 
                     <div class="field-group-speech">
                         <b>Character ID (to speak)</b>
-                        <select id="field-dialogue-charid"></select>
+                        <select id="field-dialogue-charid">
+                            <option value="none">None</option>
+                        </select>
                     </div>
                     <div class="field-group-speech">
                         <b>Emotion</b>
@@ -229,14 +231,14 @@
                     </div>
                     <div class="field-group-speech field-double stretchy">
                         <b>Focus to X</b>
-                        <input type="number" id="field-dialogue-foctox">
+                        <input type="number" id="field-dialogue-foctox" step="10">
                     </div>
                     <div class="field-group-speech field-double stretchy">
                         <b>Focus to Y</b>
-                        <input type="number" id="field-dialogue-foctoy">
+                        <input type="number" id="field-dialogue-foctoy" step="10">
                     </div>
                     <div class="field-group-speech">
-                        <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match current model position</div>
+                        <div class="generic-button white fullwidth" id="field-dialogue-matchpos">Match current model position</div>
                     </div>
                     <div class="field-group-speech field-double stretchy">
                         <b>Duration (seconds)</b>

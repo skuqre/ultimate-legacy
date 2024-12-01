@@ -207,8 +207,8 @@ input, textarea, select {
     font-size: 16px;
 }
 
-input[disabled] {
-    color: var(--text-color-disabled);
+*[disabled] {
+    color: var(--text-color-disabled) !important;
 }
 
 input[type="text"] {
