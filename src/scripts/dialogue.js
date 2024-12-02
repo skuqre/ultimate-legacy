@@ -147,17 +147,6 @@ function parseDialogue(noTalk = false) {
                     characterModel.talking = true;
                 }
             }
-
-            if (entry.focusX || entry.focusY) {
-                const tween = new Tween(camera)
-                    .to({
-                        x: entry.focusX ? entry.focusPosX : camera.x,
-                        y: entry.focusY ? entry.focusPosY : camera.y,
-                    }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
-                    .easing(Easing.Sinusoidal.InOut)
-                    .start()
-                tweens.push(tween);
-            }
         
             curDialogueCurTime = 0.0;
             curDialoguePlaying = true;
@@ -211,6 +200,21 @@ function parseDialogue(noTalk = false) {
             curDialoguePlaying = true;
 
             break;
+    }
+
+    if (entry.focusX || entry.focusY) {
+        const tween = new Tween(camera)
+            .to({
+                x: entry.focusX ? entry.focusPosX : camera.x,
+                y: entry.focusY ? entry.focusPosY : camera.y,
+            }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .start()
+        tweens.push(tween);
+    }
+
+    if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
+        curDialogueMaxTime = entry.keyframeDuration;
     }
 
     if (skipNext) {
@@ -616,11 +620,29 @@ function dialogueLoop(elapsed) {
         if (curDialogueCurTime < curDialogueMaxTime) {
             curDialogueCurTime += elapsed;
             updateText();
+            updateTimelinePosition();
+
+            if (curScenario[curDialogue].type === "Speech" ||
+                curScenario[curDialogue].type === "Narration" ||
+                curScenario[curDialogue].type === "Monologue") {
+                dialogueDecoPointer.style.opacity = "0";
+                dialogueDecoPointer.style.animation = "unset";
+            }
         } else {
             curDialogueCurTime = curDialogueMaxTime;
             curDialoguePlaying = false;
             updateText();
+            updateTimelinePosition();
 
+            if (curScenario[curDialogue].type === "Speech" ||
+                curScenario[curDialogue].type === "Narration" ||
+                curScenario[curDialogue].type === "Monologue") {
+                dialogueDecoPointer.style.opacity = "1";
+                dialogueDecoPointer.style.animation = "0.8s infinite pointer cubic-bezier(0.37, 0, 0.63, 1)";
+            }
+        }
+
+        if (curDialogueCurTime >= calcLength(curScenario[curDialogue].content)) {
             if (curScenario[curDialogue].type === "Speech") {
                 if (curScenario[curDialogue].speakerModel !== null) {
                     if (!(curScenario[curDialogue].speakerModel in characters)) return;
@@ -630,13 +652,6 @@ function dialogueLoop(elapsed) {
                     characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(1, 4 / 60);
                     characters[curScenario[curDialogue].speakerModel].talking = false;
                 }
-            }
-
-            if (curScenario[curDialogue].type === "Speech" ||
-                curScenario[curDialogue].type === "Narration" ||
-                curScenario[curDialogue].type === "Monologue") {
-                dialogueDecoPointer.style.opacity = "1";
-                dialogueDecoPointer.style.animation = "0.8s infinite pointer cubic-bezier(0.37, 0, 0.63, 1)";
             }
         }
     }
@@ -845,6 +860,16 @@ function updateDialogueList() {
         highlight.style.display = "none";
         div.appendChild(highlight);
 
+        const jumpHighlight = document.createElement("div");
+        jumpHighlight.classList.add("jump-highlight");
+        jumpHighlight.style.display = "none";
+        div.appendChild(jumpHighlight);
+
+        const fromHighlight = document.createElement("div");
+        fromHighlight.classList.add("from-highlight");
+        fromHighlight.style.display = "none";
+        div.appendChild(fromHighlight);
+
         editorDialogueList.appendChild(div);
 
         curEntries.push(div);
@@ -900,6 +925,7 @@ function selectDialogueEntry(to) {
     }
 
     updateEditPanel();
+    updateTimelineLines();
 }
 
 dialogueAdd.addEventListener("click", () => {
@@ -915,6 +941,7 @@ dialogueAdd.addEventListener("click", () => {
         focusPosY: 1080 / 2,
     	content: "",
     	keyframes: [],
+        keyframeDuration: null,
     	time: null,
     	choices: null
     });
@@ -1206,7 +1233,8 @@ const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
 const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
 const fieldDialogueFocusPosX = document.getElementById("field-dialogue-foctox");
 const fieldDialogueFocusPosY = document.getElementById("field-dialogue-foctoy");
-const fieldDialogueMatchPos = document.getElementById("field-dialogue-matchpos");
+
+const fieldDialogueTLDur = document.getElementById("field-dialogue-tldur");
 
 const fieldNarrationContent = document.getElementById("field-dialogue-ncontent");
 const fieldMonologueContent = document.getElementById("field-dialogue-mcontent");
@@ -1234,12 +1262,44 @@ function updateEditPanel() {
         }
     }
 
+    const allGroup = document.getElementsByClassName("field-group-all");
+    if (entry.type === "" || entry.type === "Choice") {
+        for (const e of allGroup) {
+            e.style.display = "none";
+        }
+    } else {
+        for (const e of allGroup) {
+            e.style.display = "";
+        }
+    }
+
     const selectedGroupName = fieldDialogueType.value.toLowerCase();
     const selectedGroupElement = document.getElementsByClassName("field-group-" + selectedGroupName);
 
     for (const e of selectedGroupElement) {
         e.style.display = "";
     }
+
+    fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFocusPosX.value = entry.focusPosX;
+    fieldDialogueFocusPosY.value = entry.focusPosY;
+    fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
+
+    if (entry.focusX) {
+        fieldDialogueFocusPosX.removeAttribute("disabled");
+    } else {
+        fieldDialogueFocusPosX.setAttribute("disabled", "");
+    }
+
+    if (entry.focusY) {
+        fieldDialogueFocusPosY.removeAttribute("disabled");
+    } else {
+        fieldDialogueFocusPosY.setAttribute("disabled", "");
+    }
+
+    const num = Math.max(entry.keyframeDuration, calcLength(entry.content));
+    fieldDialogueTLDur.value = num;
 
     switch (entry.type) {
         case "Speech":
@@ -1259,7 +1319,6 @@ function updateEditPanel() {
                 fieldDialogueEmotion.innerHTML = "";
 
                 fieldDialogueEmotion.removeAttribute("disabled");
-                fieldDialogueMatchPos.removeAttribute("disabled");
                 fieldDialogueMatchInit.removeAttribute("disabled");
 
                 if (characters[entry.speakerModel]) {
@@ -1279,28 +1338,8 @@ function updateEditPanel() {
                 fieldDialogueEmotion.innerHTML = "<option selected value=\"none\">No model selected</option>";
 
                 fieldDialogueEmotion.setAttribute("disabled", "");
-                fieldDialogueMatchPos.setAttribute("disabled", "");
                 fieldDialogueMatchInit.setAttribute("disabled", "");
             }
-
-            fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
-            fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
-            fieldDialogueFocusPosX.value = entry.focusPosX;
-            fieldDialogueFocusPosY.value = entry.focusPosY;
-            fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
-
-            if (entry.focusX) {
-                fieldDialogueFocusPosX.removeAttribute("disabled");
-            } else {
-                fieldDialogueFocusPosX.setAttribute("disabled", "");
-            }
-
-            if (entry.focusY) {
-                fieldDialogueFocusPosY.removeAttribute("disabled");
-            } else {
-                fieldDialogueFocusPosY.setAttribute("disabled", "");
-            }
-
             break;
         case "Choice":
             break
@@ -1454,6 +1493,10 @@ fieldDialogueContent.addEventListener("change", () => {
 
     entry.content = fieldDialogueContent.value;
 
+    if (entry.keyframeDuration < calcLength(entry.content)) {
+        entry.keyframeDuration = calcLength(entry.content);
+    }
+
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
 });
@@ -1537,19 +1580,6 @@ fieldDialogueFocusPosY.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldDialogueMatchPos.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    if (!characters[entry.speakerModel]) return;
-    const characterModel = characters[entry.speakerModel];
-
-    entry.focusPosX = characterModel.transforms.x;
-    entry.focusPosY = characterModel.transforms.y;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
 fieldDialogueFocusDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
@@ -1559,19 +1589,41 @@ fieldDialogueFocusDur.addEventListener("change", () => {
     selectDialogueEntry(curSelectedEntry);
 })
 
-fieldNarrationContent.addEventListener("input", () => {
+fieldDialogueTLDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
-    entry.content = fieldNarrationContent.value;
+    entry.keyframeDuration = parseFloat(fieldDialogueTLDur.value);
+
+    if (entry.keyframeDuration < calcLength(entry.content)) {
+        fieldDialogueTLDur.value = calcLength(entry.content);
+        entry.keyframeDuration = calcLength(entry.content);
+    }
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldMonologueContent.addEventListener("input", () => {
+fieldNarrationContent.addEventListener("change", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.content = fieldNarrationContent.value;
+
+    if (entry.keyframeDuration < calcLength(entry.content)) {
+        entry.keyframeDuration = calcLength(entry.content);
+    }
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldMonologueContent.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
     entry.content = fieldMonologueContent.value;
+
+    if (entry.keyframeDuration < calcLength(entry.content)) {
+        entry.keyframeDuration = calcLength(entry.content);
+    }
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
@@ -1764,6 +1816,97 @@ fieldWorldInitCamR.addEventListener("input", () => {
     camera.initR = parseFloat(fieldWorldInitCamR.value);
     updatePositionsToLatest();
 });
+
+const timelineMain = document.getElementById("timeline-main");
+
+const fieldTimelineZoom = document.getElementById("field-timeline-zoom");
+const fieldTimelineCurTime = document.getElementById("field-timeline-curtime");
+const fieldTimelineMaxTime = document.getElementById("field-timeline-maxtime");
+
+let timelineZoom = 1.0;
+function updateTimelineLines() {
+    timelineMain.innerHTML = "";
+
+    const entry = curScenario[curDialogue];
+    if (!entry.keyframeDuration || entry.keyframeDuration <= 0) return;
+
+    let curX = 16;
+    while (curX < secondsToPixel(entry.keyframeDuration, timelineZoom)) {
+        const div = document.createElement("div");
+        div.classList.add("timeline-line");
+        div.style.left = curX + "px";
+
+        const time = document.createElement("span");
+        time.classList.add("timeline-time");
+        time.style.left = curX + "px";
+        time.innerHTML = formatTime(pixelsToSeconds(curX, timelineZoom));
+
+        timelineMain.appendChild(time);
+        timelineMain.appendChild(div);
+
+        curX += PIXELS_PER_SECOND;
+    }
+
+    updateTimelinePosition();
+}
+
+const timelineLine = document.getElementById("timeline-line");
+const timelineEndLine = document.getElementById("timeline-end-line");
+const timelineHead = document.getElementById("timeline-head");
+
+function updateTimelinePosition() {
+    timelineLine.style.left = (16 + secondsToPixel(curDialogueCurTime, timelineZoom)) + "px";
+    timelineEndLine.style.left = (16 + secondsToPixel(curDialogueMaxTime, timelineZoom)) + "px";
+
+    fieldTimelineCurTime.value = formatTime(curDialogueCurTime);
+    fieldTimelineMaxTime.value = formatTime(curDialogueMaxTime);
+}
+
+fieldTimelineZoom.addEventListener("input", () => {
+    timelineZoom = parseFloat(fieldTimelineZoom.value);
+    updateTimelineLines();
+});
+
+fieldTimelineCurTime.addEventListener("change", () => {
+
+});
+
+fieldTimelineMaxTime.addEventListener("change", () => {
+
+});
+
+var mouseCapture = [];
+var timelineCapture = null;
+var holdingTimeline = false;
+timelineHead.addEventListener("pointerdown", (e) => {
+    if (holdingTimeline) return;
+    mouseCapture[0] = e.clientX;
+    mouseCapture[1] = e.clientY;
+
+    timelineCapture = curDialogueCurTime;
+    holdingTimeline = true;
+    curDialoguePlaying = false;
+});
+
+document.addEventListener("pointermove", (e) => {
+    if (!holdingTimeline) return;
+
+    const entry = curScenario[curDialogue];
+
+    curDialoguePlaying = true;
+    curDialogueCurTime = timelineCapture + pixelsToSeconds(e.clientX - mouseCapture[0], timelineZoom);
+    curDialogueCurTime = clamp(curDialogueCurTime, 0, entry.keyframeDuration);
+    dialogueLoop(0)
+    curDialoguePlaying = false;
+
+    updateTimelinePosition();
+});
+
+document.addEventListener("pointerup", (e) => {
+    if (!holdingTimeline) return;
+
+    holdingTimeline = false;
+})
 
 //
 

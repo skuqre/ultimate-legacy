@@ -220,6 +220,11 @@ input.fullwidth {
     box-sizing: border-box;
 }
 
+input.time-input {
+    width: 64px;
+    text-align: center;
+}
+
 textarea#field-dialogue-content,
 textarea#field-dialogue-ncontent,
 textarea#field-dialogue-mcontent {
@@ -320,6 +325,32 @@ div.select-highlight {
     height: 100%;
 
     border: 4px var(--accent) solid;
+
+    box-sizing: border-box;
+}
+
+div.from-highlight {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    border: 4px blue dashed;
+
+    box-sizing: border-box;
+}
+
+div.jump-highlight {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    border: 4px orange dashed;
 
     box-sizing: border-box;
 }
@@ -519,4 +550,117 @@ img.list-item-pre {
 div#loading-screen {
     z-index: 999;
     text-align: center;
+}
+
+div.timeline-wrapper {
+    position: relative;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    overflow-y: hidden;
+    overflow-x: auto;
+
+    background-color: black;
+}
+
+div.timeline {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    box-sizing: border-box;
+    overflow: visible;
+
+    background-color: rgba(0, 0, 0, 0);
+}
+
+div.timeline-line {
+    position: absolute;
+
+    top: 24px;
+    width: 1px;
+    height: calc(100% - 24px);
+    background-color: var(--dark);
+}
+
+div.timeline span.timeline-time {
+    position: absolute;
+
+    top: 4px;
+
+    color: var(--text-color);
+    transform: translateX(-50%);
+
+    font-size: 12px;
+    user-select: none;
+}
+
+div.timeline-pos-line {
+    position: absolute;
+
+    left: 16px;
+    top: 24px;
+
+    width: 1px;
+    height: calc(100% - 24px);
+
+    background-color: #ff5050;
+}
+
+div.pos-line-deco-head {
+    position: absolute;
+
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 12px;
+    height: 16px;
+
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+
+    background-color: inherit;
+}
+
+div.pos-line-deco-butt {
+    position: absolute;
+
+    width: 9px;
+    height: 9px;
+
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%) rotate(45deg);
+
+    border-bottom-right-radius: 2px;
+
+    background-color: inherit;
+}
+
+div.pos-line-deco-head-end {
+    position: absolute;
+
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 12px;
+    height: 12px;
+
+    border-radius: 2px;
+
+    background-color: inherit;
+}
+
+div#timeline-scrubber {
+    background-color: rgba(0, 0, 0, 0);
 }

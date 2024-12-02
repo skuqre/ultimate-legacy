@@ -54,3 +54,25 @@ function mouseOver(id, event) {
     return ((event.clientX >= rect.x && event.clientX <= rect.x + rect.width) &&
         (event.clientY >= rect.y && event.clientY <= rect.y + rect.height));
 }
+
+const PIXELS_PER_SECOND = 48;
+
+function secondsToPixel(seconds, zoom) {
+    return seconds * (PIXELS_PER_SECOND * zoom);
+}
+
+function pixelsToSeconds(pixels, zoom) {
+    return pixels / (PIXELS_PER_SECOND * zoom);
+}
+
+function formatTime(d) {
+    d = Number(d);
+    var h = Math.floor(d / 3600);
+    var m = Math.floor(d % 3600 / 60);
+    var s = Math.floor(d % 3600 % 60);
+
+    var hDisplay = h > 0 ? h + ":" : "";
+    var mDisplay = m + ":";
+    var sDisplay = s.toString().padStart(2, "0");
+    return hDisplay + mDisplay + sDisplay; 
+}

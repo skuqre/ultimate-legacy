@@ -219,31 +219,6 @@
                         <select id="field-dialogue-emotion"></select>
                         <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match initial emotion</div>
                     </div>
-                    <div class="field-group-speech field-double">
-                        <div>
-                            <b>Focus X</b>
-                            <div class="button white" id="field-dialogue-focx"></div>
-                        </div>
-                        <div>
-                            <b>Focus Y</b>
-                            <div class="button white" id="field-dialogue-focy"></div>
-                        </div>
-                    </div>
-                    <div class="field-group-speech field-double stretchy">
-                        <b>Focus to X</b>
-                        <input type="number" id="field-dialogue-foctox" step="10">
-                    </div>
-                    <div class="field-group-speech field-double stretchy">
-                        <b>Focus to Y</b>
-                        <input type="number" id="field-dialogue-foctoy" step="10">
-                    </div>
-                    <div class="field-group-speech">
-                        <div class="generic-button white fullwidth" id="field-dialogue-matchpos">Match current model position</div>
-                    </div>
-                    <div class="field-group-speech field-double stretchy">
-                        <b>Duration (seconds)</b>
-                        <input type="number" id="field-dialogue-focd" step="0.1" value="0.5" min="0">
-                    </div>
                     <div class="field-group-speech">
                         <hr>
                     </div>
@@ -266,7 +241,37 @@
                         <textarea id="field-dialogue-mcontent"></textarea>
                     </div>
 
-                    <hr>
+                    <hr class="field-group-all">
+
+                    <div class="field-group-all field-double">
+                        <div>
+                            <b>Focus X</b>
+                            <div class="button white" id="field-dialogue-focx"></div>
+                        </div>
+                        <div>
+                            <b>Focus Y</b>
+                            <div class="button white" id="field-dialogue-focy"></div>
+                        </div>
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Focus to X</b>
+                        <input type="number" id="field-dialogue-foctox" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Focus to Y</b>
+                        <input type="number" id="field-dialogue-foctoy" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Focus Duration</b>
+                        <input type="number" id="field-dialogue-focd" step="0.1" value="0.5" min="0">
+                    </div>
+
+                    <hr class="field-group-all">
+
+                    <div class="field-group-all field-double stretchy">
+                        <b>Timeline Duration</b>
+                        <input type="number" id="field-dialogue-tldur" step="0.1" value="0" min="0">
+                    </div>
                 </div>
                 <div class="generic-panel" id="editor-edit-inst">
                     <span>Select a dialogue entry to get started.</span>
@@ -274,9 +279,50 @@
             </div>
         </div>
         <div class="generic-double" style="top: 50%; left: 50%">
-            <div id="timeline-main" style="max-width: 100%; width: 100%; flex-basis: 100%;">
+            <div style="max-width: 100%; width: 100%; flex-basis: 100%;">
                 <div class="generic-header">
+                    <div class="button-tray">
+                        <div class="button white" id="world-open">
+                            <i class="bx bx-slideshow"></i>
+                        </div>
+                    </div>
+                    <div class="button-tray">
+                        <div class="button white" id="world-open">
+                            <i class="bx bx-skip-previous"></i>
+                        </div>
+                        <div class="button white" id="world-open">
+                            <i class="bx bx-pause"></i>
+                        </div>
+                        <div class="button white" id="world-open">
+                            <i class="bx bx-play"></i>
+                        </div>
+                        <div class="button white" id="world-open">
+                            <i class="bx bx-skip-next"></i>
+                        </div>
+                    </div>
+                    <div class="button-tray">
+                        <input type="text" class="time-input" id="field-timeline-curtime">
+                        <span>/</span>
+                        <input type="text" class="time-input" id="field-timeline-maxtime">
+                        <input type="number" class="time-input" style="text-align: left;" step="0.1" min="0" value="1" id="field-timeline-zoom">
+                    </div>
                 </div>
+                <div class="timeline-wrapper">
+                    <div id="timeline-main" class="timeline">
+                    </div>
+                    <div id="timeline-scrubber" class="timeline">
+                        <div class="timeline-pos-line" id="timeline-end-line" style="background-color: palegreen;" title="This marks the end of the dialogue.">
+                            <div class="pos-line-deco-head-end" id="timeline-end-head"></div>
+                        </div>
+
+                        <div class="timeline-pos-line" id="timeline-line" title="This marks where you are at the time of the dialogue.">
+                            <div class="pos-line-deco-head" id="timeline-head">
+                                <div class="pos-line-deco-butt"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
         <div class="generic-double" style="left: 50%">

@@ -62,9 +62,15 @@ body {
     padding: 0;
 }
 
-*::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track:vertical {
     background-color: rgba(0, 0, 0, 0);
     border-left: 1px solid var(--dark);
+    /* box-sizing: border-box; */
+}
+
+*::-webkit-scrollbar-track:horizontal {
+    background-color: rgba(0, 0, 0, 0);
+    border-top: 1px solid var(--dark);
     /* box-sizing: border-box; */
 }
 
