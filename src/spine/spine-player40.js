@@ -5565,7 +5565,6 @@ var spine40 = (() => {
       this.color = new Color(1, 1, 1, 1);
       this.updateCache();
     }
-
     updateCache() {
       let updateCache = this._updateCache;
       updateCache.length = 0;
@@ -6006,7 +6005,6 @@ var spine40 = (() => {
       this.imagesPath = null;
       this.audioPath = null;
     }
-
     findBone(boneName) {
       if (!boneName)
         throw new Error("boneName cannot be null.");
@@ -8199,7 +8197,7 @@ var spine40 = (() => {
           region.scaleX = getValue(map, "scaleX", 1);
           region.scaleY = getValue(map, "scaleY", 1);
           region.rotation = getValue(map, "rotation", 0);
-          // region.width = map.width * scale;
+          region.width = map.width * scale;
           region.height = map.height * scale;
           let color = getValue(map, "color", null);
           if (color)
@@ -8227,7 +8225,7 @@ var spine40 = (() => {
           let color = getValue(map, "color", null);
           if (color)
             mesh.color.setFromString(color);
-          // mesh.width = getValue(map, "width", 0) * scale;
+          mesh.width = getValue(map, "width", 0) * scale;
           mesh.height = getValue(map, "height", 0) * scale;
           let parent = getValue(map, "parent", null);
           if (parent) {
@@ -9433,7 +9431,6 @@ var spine40 = (() => {
       worldCoords.z = (worldCoords.z + 1) / 2;
       return worldCoords;
     }
-
     setViewport(viewportWidth, viewportHeight) {
       this.viewportWidth = viewportWidth;
       this.viewportHeight = viewportHeight;
@@ -9503,7 +9500,7 @@ var spine40 = (() => {
         }
       };
       let mouseWheel = (e) => {
-
+        e.preventDefault();
         let deltaY = e.deltaY;
         if (e.deltaMode == WheelEvent.DOM_DELTA_LINE)
           deltaY *= 8;
@@ -11465,8 +11462,9 @@ var spine40 = (() => {
       }
     }
     dispose() {
-      this.logo.dispose();
-      this.spinner.dispose();
+      var _a, _b;
+      (_a = this.logo) == null ? void 0 : _a.dispose();
+      (_b = this.spinner) == null ? void 0 : _b.dispose();
     }
     draw(complete = false) {
       if (loaded < 2 || complete && this.fadeOut > FADE_OUT)
@@ -11590,6 +11588,7 @@ var spine40 = (() => {
       this.viewportTransitionStart = 0;
       this.eventListeners = [];
       this.parent = typeof parent === "string" ? document.getElementById(parent) : parent;
+      this.zoomMultiplier = 1.0;
       if (!this.parent)
         throw new Error("SpinePlayer parent not found: " + parent);
       if (config.showControls === void 0)
@@ -11607,7 +11606,7 @@ var spine40 = (() => {
 <button class="spine-player-button spine-player-button-icon-fullscreen"></button>
 <img class="spine-player-button-icon-spine-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20104%2031.16%22%3E%3Cpath%20d%3D%22M104%2012.68a1.31%201.31%200%200%201-.37%201%201.28%201.28%200%200%201-.85.31H91.57a10.51%2010.51%200%200%200%20.29%202.55%204.92%204.92%200%200%200%201%202%204.27%204.27%200%200%200%201.64%201.26%206.89%206.89%200%200%200%202.6.44%2010.66%2010.66%200%200%200%202.17-.2%2012.81%2012.81%200%200%200%201.64-.44q.69-.25%201.14-.44a1.87%201.87%200%200%201%20.68-.2.44.44%200%200%201%20.27.04.43.43%200%200%201%20.16.2%201.38%201.38%200%200%201%20.09.37%204.89%204.89%200%200%201%200%20.58%204.14%204.14%200%200%201%200%20.43v.32a.83.83%200%200%201-.09.26%201.1%201.1%200%200%201-.17.22%202.77%202.77%200%200%201-.61.34%208.94%208.94%200%200%201-1.32.46%2018.54%2018.54%200%200%201-1.88.41%2013.78%2013.78%200%200%201-2.28.18%2010.55%2010.55%200%200%201-3.68-.59%206.82%206.82%200%200%201-2.66-1.74%207.44%207.44%200%200%201-1.63-2.89%2013.48%2013.48%200%200%201-.55-4%2012.76%2012.76%200%200%201%20.57-3.94%208.35%208.35%200%200%201%201.64-3%207.15%207.15%200%200%201%202.58-1.87%208.47%208.47%200%200%201%203.39-.65%208.19%208.19%200%200%201%203.41.64%206.46%206.46%200%200%201%202.32%201.73%207%207%200%200%201%201.3%202.54%2011.17%2011.17%200%200%201%20.43%203.13zm-3.14-.93a5.69%205.69%200%200%200-1.09-3.86%204.17%204.17%200%200%200-3.42-1.4%204.52%204.52%200%200%200-2%20.44%204.41%204.41%200%200%200-1.47%201.15A5.29%205.29%200%200%200%2092%209.75a7%207%200%200%200-.36%202zM80.68%2021.94a.42.42%200%200%201-.08.26.59.59%200%200%201-.25.18%201.74%201.74%200%200%201-.47.11%206.31%206.31%200%200%201-.76%200%206.5%206.5%200%200%201-.78%200%201.74%201.74%200%200%201-.47-.11.59.59%200%200%201-.25-.18.42.42%200%200%201-.08-.26V12a9.8%209.8%200%200%200-.23-2.35%204.86%204.86%200%200%200-.66-1.53%202.88%202.88%200%200%200-1.13-1%203.57%203.57%200%200%200-1.6-.34%204%204%200%200%200-2.35.83A12.71%2012.71%200%200%200%2069.11%2010v11.9a.42.42%200%200%201-.08.26.59.59%200%200%201-.25.18%201.74%201.74%200%200%201-.47.11%206.51%206.51%200%200%201-.78%200%206.31%206.31%200%200%201-.76%200%201.88%201.88%200%200%201-.48-.11.52.52%200%200%201-.25-.18.46.46%200%200%201-.07-.26v-17a.53.53%200%200%201%20.03-.21.5.5%200%200%201%20.23-.19%201.28%201.28%200%200%201%20.44-.11%208.53%208.53%200%200%201%201.39%200%201.12%201.12%200%200%201%20.43.11.6.6%200%200%201%20.22.19.47.47%200%200%201%20.07.26V7.2a10.46%2010.46%200%200%201%202.87-2.36%206.17%206.17%200%200%201%202.88-.75%206.41%206.41%200%200%201%202.87.58%205.16%205.16%200%200%201%201.88%201.54%206.15%206.15%200%200%201%201%202.26%2013.46%2013.46%200%200%201%20.31%203.11z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M43.35%202.86c.09%202.6%201.89%204%205.48%204.61%203%20.48%205.79.24%206.69-2.37%201.75-5.09-2.4-3.82-6-4.39s-6.31-2.03-6.17%202.15zm1.08%2010.69c.33%201.94%202.14%203.06%204.91%203s4.84-1.16%205.13-3.25c.53-3.88-2.53-2.38-5.3-2.3s-5.4-1.26-4.74%202.55zM48%2022.44c.55%201.45%202.06%202.06%204.1%201.63s3.45-1.11%203.33-2.76c-.21-3.06-2.22-2.1-4.26-1.66S47%2019.6%2048%2022.44zm1.78%206.78c.16%201.22%201.22%202%202.88%201.93s2.92-.67%203.13-2c.4-2.43-1.46-1.53-3.12-1.51s-3.17-.82-2.89%201.58z%22%20fill%3D%22%23ff4000%22%2F%3E%3Cpath%20d%3D%22M35.28%2013.16a15.33%2015.33%200%200%201-.48%204%208.75%208.75%200%200%201-1.42%203%206.35%206.35%200%200%201-2.32%201.91%207.14%207.14%200%200%201-3.16.67%206.1%206.1%200%200%201-1.4-.15%205.34%205.34%200%200%201-1.26-.47%207.29%207.29%200%200%201-1.24-.81q-.61-.49-1.29-1.15v8.51a.47.47%200%200%201-.08.26.56.56%200%200%201-.25.19%201.74%201.74%200%200%201-.47.11%206.47%206.47%200%200%201-.78%200%206.26%206.26%200%200%201-.76%200%201.89%201.89%200%200%201-.48-.11.49.49%200%200%201-.25-.19.51.51%200%200%201-.07-.26V4.91a.57.57%200%200%201%20.06-.27.46.46%200%200%201%20.23-.18%201.47%201.47%200%200%201%20.44-.1%207.41%207.41%200%200%201%201.3%200%201.45%201.45%200%200%201%20.43.1.52.52%200%200%201%20.24.18.51.51%200%200%201%20.07.27V7.2a18.06%2018.06%200%200%201%201.49-1.38%209%209%200%200%201%201.45-1%206.82%206.82%200%200%201%201.49-.59%207.09%207.09%200%200%201%204.78.52%206%206%200%200%201%202.13%202%208.79%208.79%200%200%201%201.2%202.9%2015.72%2015.72%200%200%201%20.4%203.51zm-3.28.36a15.64%2015.64%200%200%200-.2-2.53%207.32%207.32%200%200%200-.69-2.17%204.06%204.06%200%200%200-1.3-1.51%203.49%203.49%200%200%200-2-.57%204.1%204.1%200%200%200-1.2.18%204.92%204.92%200%200%200-1.2.57%208.54%208.54%200%200%200-1.28%201A15.77%2015.77%200%200%200%2022.76%2010v6.77a13.53%2013.53%200%200%200%202.46%202.4%204.12%204.12%200%200%200%202.44.83%203.56%203.56%200%200%200%202-.57A4.28%204.28%200%200%200%2031%2018a7.58%207.58%200%200%200%20.77-2.12%2011.43%2011.43%200%200%200%20.23-2.36zM12%2017.3a5.39%205.39%200%200%201-.48%202.33%204.73%204.73%200%200%201-1.37%201.72%206.19%206.19%200%200%201-2.12%201.06%209.62%209.62%200%200%201-2.71.36%2010.38%2010.38%200%200%201-3.21-.5A7.63%207.63%200%200%201%201%2021.82a3.25%203.25%200%200%201-.66-.43%201.09%201.09%200%200%201-.3-.53%203.59%203.59%200%200%201-.04-.93%204.06%204.06%200%200%201%200-.61%202%202%200%200%201%20.09-.4.42.42%200%200%201%20.16-.22.43.43%200%200%201%20.24-.07%201.35%201.35%200%200%201%20.61.26q.41.26%201%20.56a9.22%209.22%200%200%200%201.41.55%206.25%206.25%200%200%200%201.87.26%205.62%205.62%200%200%200%201.44-.17%203.48%203.48%200%200%200%201.12-.5%202.23%202.23%200%200%200%20.73-.84%202.68%202.68%200%200%200%20.26-1.21%202%202%200%200%200-.37-1.21%203.55%203.55%200%200%200-1-.87%208.09%208.09%200%200%200-1.36-.66l-1.56-.61a16%2016%200%200%201-1.57-.73%206%206%200%200%201-1.37-1%204.52%204.52%200%200%201-1-1.4%204.69%204.69%200%200%201-.37-2%204.88%204.88%200%200%201%20.39-1.87%204.46%204.46%200%200%201%201.16-1.61%205.83%205.83%200%200%201%201.94-1.11A8.06%208.06%200%200%201%206.53%204a8.28%208.28%200%200%201%201.36.11%209.36%209.36%200%200%201%201.23.28%205.92%205.92%200%200%201%20.94.37%204.09%204.09%200%200%201%20.59.35%201%201%200%200%201%20.26.26.83.83%200%200%201%20.09.26%201.32%201.32%200%200%200%20.06.35%203.87%203.87%200%200%201%200%20.51%204.76%204.76%200%200%201%200%20.56%201.39%201.39%200%200%201-.09.39.5.5%200%200%201-.16.22.35.35%200%200%201-.21.07%201%201%200%200%201-.49-.21%207%207%200%200%200-.83-.44%209.26%209.26%200%200%200-1.2-.44%205.49%205.49%200%200%200-1.58-.16%204.93%204.93%200%200%200-1.4.18%202.69%202.69%200%200%200-1%20.51%202.16%202.16%200%200%200-.59.83%202.43%202.43%200%200%200-.2%201%202%202%200%200%200%20.38%201.24%203.6%203.6%200%200%200%201%20.88%208.25%208.25%200%200%200%201.38.68l1.58.62q.8.32%201.59.72a6%206%200%200%201%201.39%201%204.37%204.37%200%200%201%201%201.36%204.46%204.46%200%200%201%20.37%201.8z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
 </div></div>` : "";
-      this.parent.appendChild(this.dom = createElement(`<div class="spine-player" style="position:relative;height:100%"><canvas class="spine-player-canvas"  style=""></canvas>${controls}</div>`));
+      this.parent.appendChild(this.dom = createElement(`<div class="spine-player" style="position:relative;height:100%"><canvas class="spine-player-canvas" style="display:block;width:100%;height:100%"></canvas>${controls}</div>`));
       try {
         this.validateConfig(config);
       } catch (e) {
@@ -11785,7 +11784,7 @@ var spine40 = (() => {
       if (this.error)
         return;
       if (this.assetManager.hasErrors())
-        this.showError("This character does not have the desired animation, or it is a NPC");
+        this.showError("Error: Assets could not be loaded.\n" + toString(this.assetManager.getErrors()));
       let config = this.config;
       let atlas = this.assetManager.require(config.atlasUrl);
       let gl = this.context.gl, anisotropic = gl.getExtension("EXT_texture_filter_anisotropic");
@@ -11937,9 +11936,8 @@ ${e.message}`, e);
         up: () => {
           if (target)
             target = null;
-          // else if (config.showControls)
-          // this.play()
-          //this.paused ? this.play() : this.pause();
+          else if (config.showControls)
+            this.paused ? this.play() : this.pause();
         },
         dragged: (x, y) => {
           if (target) {
@@ -12106,7 +12104,7 @@ ${e.message}`, e);
       let minX = 1e8, maxX = -1e8, minY = 1e8, maxY = -1e8;
       let offset = new Vector2(), size = new Vector2();
       for (let i = 0; i < steps; i++, time += stepTime) {
-        // animation.apply(this.skeleton, time, time, false, null, 1, MixBlend.setup, MixDirection.mixIn);
+        animation.apply(this.skeleton, time, time, false, null, 1, MixBlend.setup, MixDirection.mixIn);
         this.skeleton.updateWorldTransform();
         this.skeleton.getBounds(offset, size);
         if (!isNaN(offset.x) && !isNaN(offset.y) && !isNaN(size.x) && !isNaN(size.y)) {
@@ -12165,8 +12163,7 @@ ${e.message}`, e);
           let viewport = this.viewport;
           viewport.x = this.currentViewport.x - this.currentViewport.padLeft, viewport.y = this.currentViewport.y - this.currentViewport.padBottom, viewport.width = this.currentViewport.width + this.currentViewport.padLeft + this.currentViewport.padRight, viewport.height = this.currentViewport.height + this.currentViewport.padBottom + this.currentViewport.padTop;
           if (this.previousViewport) {
-            // let transitionAlpha = (performance.now() - this.viewportTransitionStart) / 1e3 / config.viewport.transitionTime;
-            let transitionAlpha = 1;
+            let transitionAlpha = (performance.now() - this.viewportTransitionStart) / 1e3 / config.viewport.transitionTime;
             if (transitionAlpha < 1) {
               let x = this.previousViewport.x - this.previousViewport.padLeft;
               let y = this.previousViewport.y - this.previousViewport.padBottom;
@@ -12179,7 +12176,7 @@ ${e.message}`, e);
             }
           }
           renderer.camera.zoom = this.canvas.height / this.canvas.width > viewport.height / viewport.width ? viewport.width / this.canvas.width : viewport.height / this.canvas.height;
-          renderer.camera.zoom *= this.zoomMultiplier / 0.5;
+          renderer.camera.zoom *= this.zoomMultiplier;
           renderer.camera.position.x = viewport.x + viewport.width / 2;
           renderer.camera.position.y = viewport.y + viewport.height / 2;
           let gl = this.context.gl;
@@ -12345,7 +12342,7 @@ ${e.message}`, e);
           throw error;
       } else {
         this.error = true;
-        this.dom.appendChild(createElement(`<div class="spine-player-error" style="background:#000;color:#fff;position:absolute;top:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;overflow:auto;z-index:0">` + message.replace("\n", "<br><br>") + `</div>`));
+        this.dom.appendChild(createElement(`<div class="spine-player-error" style="background:#000;color:#fff;position:absolute;top:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;overflow:auto;z-index:999">` + message.replace("\n", "<br><br>") + `</div>`));
         if (this.config.error)
           this.config.error(this, message);
         throw error ? error : new Error(message);

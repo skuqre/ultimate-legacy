@@ -8,6 +8,9 @@ const fuzzysort = require("fuzzysort");
 var inEditor = true;
 var hasLoaded = false;
 
+const dialogueMain = document.getElementById("dialogue-main");
+const editorMain = document.getElementById("editor-main");
+
 const psb = new FontFace('Pretendard-SemiBold', "url('../assets/fonts/Pretendard-SemiBold.ttf')");
 await psb.load();
 document.fonts.add(psb);
@@ -69,6 +72,16 @@ var layerBackground = document.getElementById("layer-background");
 var layerCharacter = document.getElementById("layer-character");
 
 function parseDialogue(noTalk = false) {
+    if (curDialogue > curScenario.length - 1) {
+        inEditor = true;
+        curDialogue = curScenario.length - 1;
+
+        dialogueMain.classList.add("edit-mode");
+        editorMain.style.display = null;
+
+        return;
+    }
+    
     if (curDialogue === 0) {
         initPositions();
     }
@@ -77,8 +90,6 @@ function parseDialogue(noTalk = false) {
         initPositions();
         return;
     }
-
-    if (curDialogue > curScenario.length - 1) return; // quit
 
     const entry = curScenario[curDialogue];
     curDialogueState = entry.type.toLowerCase();
@@ -209,8 +220,12 @@ function parseDialogue(noTalk = false) {
                 y: entry.focusY ? entry.focusPosY : camera.y,
             }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
             .easing(Easing.Sinusoidal.InOut)
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
             .start()
         tweens.push(tween);
+        console.log(tweens.length);
     }
 
     if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
@@ -586,6 +601,8 @@ function narrationMeasureText(text) {
  * wtf does this do
  */
 function skipOrProgress() {
+    if (!hasLoaded) return;
+
     if (curDialogueCurTime < curDialogueMaxTime) {
         if (curDialoguePlaying) {
             curDialogueCurTime = curDialogueMaxTime;
@@ -602,8 +619,12 @@ function skipOrProgress() {
             // end all tweens
             for (const i of tweens) {
                 i.end();
-                tweens.splice(0, 1);
             }
+        }
+    } else if (tweens.length > 0) {
+        // end all tweens
+        for (const i of tweens) {
+            i.end();
         }
     } else {
         curDialogue++;
@@ -686,17 +707,28 @@ const loadingText = document.getElementById("loading-text");
 function init() {
     loadingScreen.style.display = "";
 
-    for (const i of curCharacters) {
-        createCharacter(i.id, i.ver, i.initAnimation, i.initTransforms.x, i.initTransforms.y, null, i.customPath);
-    }
+    const charactersToLoad = [...curCharacters];
 
     let charsLoaded = Object.values(characters).filter(a => a.loaded);
 
     const loadInterval = setInterval(() => {
         charsLoaded = Object.values(characters).filter(a => a.loaded);
-        loadingText.innerHTML = `Loading characters... (${charsLoaded.length}/${Object.values(characters).length})`;
+        loadingText.innerHTML = `Loading characters... (${charsLoaded.length}/${curCharacters.length})`;
 
-        if (charsLoaded.length === Object.values(characters).length) {
+        const i = charactersToLoad[0];
+        if (charactersToLoad[0]) {
+            if (!characters[i.id]) {
+                createCharacter(i.id, i.ver, i.initAnimation, i.initTransforms.x, i.initTransforms.y, null, i.customPath);
+            } else {
+                if (characters[i.id].loaded) {
+                    charactersToLoad.shift();
+                    initPositions();
+                    characterLoop(0);
+                }
+            }
+        }
+
+        if (charsLoaded.length === curCharacters.length) {
             parseDialogue();
 
             updateDialogueList();
@@ -726,6 +758,7 @@ function initPositions() {
 
     // initialize character positions
     for (const i of curCharacters) {
+        if (!characters[i.id]) continue;
         characters[i.id].transforms.x = i.initTransforms.x;
         characters[i.id].transforms.y = i.initTransforms.y;
         characters[i.id].transforms.rotate = i.initTransforms.rotate;
@@ -751,7 +784,6 @@ function updatePositionsToLatest() {
 
         for (const i of tweens) {
             i.end();
-            tweens.splice(0, 1);
         }
         
         if (curScenario[curDialogue] !== undefined && curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
@@ -905,7 +937,6 @@ function selectDialogueEntry(to) {
     // end all tweens
     for (const i of tweens) {
         i.end();
-        tweens.splice(0, 1);
     }
 
     for (let i = 0; i < curSelectedEntry; i++) {
@@ -1873,6 +1904,30 @@ fieldTimelineCurTime.addEventListener("change", () => {
 
 fieldTimelineMaxTime.addEventListener("change", () => {
 
+});
+
+const timelinePresent = document.getElementById("timeline-present");
+
+timelinePresent.addEventListener("click", () => {
+    if (curScenario.length === 0) {
+        return;
+    }
+    
+    inEditor = false;
+
+    curDialogue = 0;
+    curDialogueCurTime = 0;
+    curDialoguePlaying = true;
+
+    hasLoaded = false;
+    init();
+
+    for (const i of tweens) {
+        i.end();
+    }
+
+    dialogueMain.classList.remove("edit-mode");
+    editorMain.style.display = "none";
 });
 
 var mouseCapture = [];

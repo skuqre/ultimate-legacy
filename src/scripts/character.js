@@ -8,7 +8,7 @@ let characters = {};
 
 function deleteCharacter(id) {
     if (characters[id] !== undefined) {
-        // characters[id].element.dispose();
+        characters[id].spineObject.dispose();
         characters[id].wrapper.remove();
         delete characters[id];
     }
@@ -107,7 +107,6 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
 
     characters[id].wrapper = div;
     characters[id].spineObject = new runSpineVer.SpinePlayer("character-" + id, config);
-    
 }
 
 function characterLoop(elapsed) {
@@ -125,7 +124,13 @@ function characterLoop(elapsed) {
         scale(var(--scale-num))
         rotate(${character.transforms.rotate}deg)
         `
-        
-        character.spineObject.zoomMultiplier = 1 / character.transforms.scale;
+
+        // character.spineObject.zoomMultiplier = 1 / character.transforms.scale;
+
+        character.wrapper.querySelector("canvas").style.left = `50%`;
+        character.wrapper.querySelector("canvas").style.top = `50%`;
+        character.wrapper.querySelector("canvas").style.width = character.transforms.scale * 2048;
+        character.wrapper.querySelector("canvas").style.height = character.transforms.scale * 2048;
+        character.wrapper.querySelector("canvas").style.transform = `translate(-50%, -50%)`;
     }
 }

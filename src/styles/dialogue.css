@@ -458,16 +458,22 @@ div#dialogue-element-narrationbox>span {
 
 /* SPINE */
 .spine-player-canvas {
-    width: 4096px;
-    height: 4096px;
+    width: 2048px;
+    height: 2048px;
     position: absolute;
 }
 
 div.character-spine {
-    width: 4096px;
-    height: 4096px;
+    width: 2048px;
+    height: 2048px;
 
     --scale-num: 1.0;
+}
+
+div.spine-player {
+    position: relative;
+    width: 2048px;
+    height: 2048px;
 }
 
 div.touch-fx {
