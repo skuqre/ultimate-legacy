@@ -792,6 +792,8 @@ function updatePositionsToLatest() {
     }
 }
 
+let entryClipboard = "";
+
 window.addEventListener("keydown", (e) => {
     if (inEditor) return;
     if (!curScenarioShown) return;
@@ -802,6 +804,51 @@ window.addEventListener("keydown", (e) => {
     }
     if (e.key.toLowerCase() === "h") {
         controlHide.onclick();
+    }
+});
+
+window.addEventListener("keyup", (e) => {
+    if (!inEditor) return;
+
+    const currentElement = document.activeElement.tagName.toLowerCase();
+    const elementFilters = [
+        "input",
+        "textarea"
+    ];
+
+    if (e.ctrlKey && !elementFilters.includes(currentElement)) {
+        switch (e.key.toLowerCase()) {
+            case "d": {
+                if (!curScenario[curSelectedEntry]) return;
+                const entry = curScenario[curSelectedEntry];
+                curScenario.push(JSON.parse(JSON.stringify(entry)));
+                updateDialogueList();
+                selectDialogueEntry(curScenario.length - 1);
+                break;
+            }
+            case "c": {
+                if (!curScenario[curSelectedEntry]) return;
+                const entry = curScenario[curSelectedEntry];
+                entryClipboard = JSON.stringify(entry);
+                break;
+            }
+            case "v": {
+                if (!curScenario[curSelectedEntry]) return;
+                const entry = JSON.parse(entryClipboard);
+                curScenario.splice(curSelectedEntry + 1, 0, entry);
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry + 1);
+                break;
+            }
+            case "m": {
+                dialogueAdd.dispatchEvent(new Event("click"));
+                break;
+            }
+            case "delete": {
+                dialogueDel.dispatchEvent(new Event("click"));
+                break;
+            }
+        }
     }
 });
 
@@ -1934,6 +1981,7 @@ var mouseCapture = [];
 var timelineCapture = null;
 var holdingTimeline = false;
 timelineHead.addEventListener("pointerdown", (e) => {
+    if (!curScenario[curDialogue]) return;
     if (holdingTimeline) return;
     mouseCapture[0] = e.clientX;
     mouseCapture[1] = e.clientY;
@@ -1944,6 +1992,7 @@ timelineHead.addEventListener("pointerdown", (e) => {
 });
 
 document.addEventListener("pointermove", (e) => {
+    if (!curScenario[curDialogue]) return;
     if (!holdingTimeline) return;
 
     const entry = curScenario[curDialogue];
