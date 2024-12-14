@@ -76,3 +76,73 @@ function formatTime(d) {
     var sDisplay = s.toString().padStart(2, "0");
     return hDisplay + mDisplay + sDisplay; 
 }
+
+function popUpError(text) {
+    const div = document.createElement("div");
+    div.classList.add("popup");
+
+    const span = document.createElement("span");
+    span.innerHTML = text;
+
+    div.appendChild(span);
+    document.body.appendChild(div);
+
+    setTimeout(() => {
+        span.remove();
+        div.remove();
+    }, 1400);
+}
+
+function transitionStinger() {
+    const main = document.createElement("div");
+    main.classList.add("stinger-main");
+    main.style.backdropFilter = "blur(4px)";
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("stinger-wrapper");
+
+    const icon = document.createElement("div");
+    icon.classList.add("stinger-icon");
+
+    main.appendChild(wrapper);
+    main.appendChild(icon);
+
+    for (let i = 0; i < 18; i++) {
+        setTimeout(() => {
+            for (let j = 0; j < 22; j++) {
+                const div = document.createElement("div");
+                div.classList.add("stinger-box");
+                div.style.top = (i * 108) + "px";
+                div.style.left = (j * 108) + "px";
+
+                wrapper.appendChild(div);
+
+                setTimeout(() => {
+                    div.style.transform = "scaleY(100%)";
+                    div.style.opacity = 1;
+                    div.style.backgroundColor = "black";
+
+                    if (i == 17 && j == 21) {
+                        icon.style.opacity = 0;
+                    } else if (i == 4 && j == 3) {
+                        icon.style.opacity = 0.75;
+                        icon.style.animation = "stinger-icon-animation 1s steps(30)";
+                    }
+
+                    setTimeout(() => {
+                        if (i == 17 && j == 21) {
+                            main.remove();
+                        }
+
+                        main.style.backdropFilter = "";
+                        div.style.transform = "scaleY(0%)";
+                        div.style.opacity = 0;
+                        div.style.backgroundColor = "#555555";
+                    }, 550);
+                }, j * 20);
+            }
+        }, i * 20);
+    }
+
+    document.body.appendChild(main);
+}

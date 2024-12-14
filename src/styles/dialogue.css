@@ -114,7 +114,7 @@ div#layer-controls,
 div#gds,
 img#gdc,
 img#gdt {
-    transition: opacity 0.5s cubic-bezier(0.37, 0, 0.63, 1);
+    transition: opacity 0.3s cubic-bezier(0.37, 0, 0.63, 1);
 }
 
 div#gds {
@@ -147,6 +147,13 @@ img#dialogue-deco-pointer {
     right: 113px;
 
     animation: unset;
+}
+
+img#dialogue-deco-pointer.narration {
+    top: 92.037037%;
+    left: 73.703704%;
+    bottom: unset;
+    right: unset;
 }
 
 @keyframes pointer {
@@ -498,4 +505,67 @@ div.touch-fx {
     100% {
         background-position-x: 1360px;
     }
+}
+
+/** STINGER **/
+div.stinger-main {
+    /* backdrop-filter: blur(4px); */
+
+    display: flex;
+    width: 100%;
+    height: 100%;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    z-index: 99999;
+
+    justify-content: center;
+    align-items: center;
+
+    transition: backdrop-filter 0.2s cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+div.stinger-wrapper {
+    position: absolute;
+
+    transform-origin: center;
+    transform: rotate(-26deg) scaleX(-100%) scaleY(-100%);
+    width: 2376px;
+    height: 1944px;
+}
+
+div.stinger-box {
+    position: absolute;
+
+    width: 108px;
+    height: 108px;
+
+    background-color: var(--dark);
+    opacity: 0;
+
+    transform-origin: 50% 50%;
+    transform: scaleY(0%);
+    scale: 1.05;
+
+    transition: opacity 0.05s ease-in-out, background-color 0.1s linear, transform 0.05s ease-in-out;
+}
+
+div.stinger-icon {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 256px;
+    height: 256px;
+    /* background-image: url(../assets/iconsheet.png); */
+    opacity: 0;
+    filter: brightness(0.7);
+    transition: opacity 0.25s ease-in-out;
+}
+
+@keyframes stinger-icon-animation {
+    from {background-position: 0px;}
+    to {background-position: 7680px;}
 }

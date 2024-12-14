@@ -615,6 +615,12 @@ div.timeline-pos-line {
     background-color: #ff5050;
 }
 
+div#timeline-blocker {
+    padding: 16px;
+    box-sizing: border-box;
+    background-color: var(--darkererer);
+}
+
 div.pos-line-deco-head {
     position: absolute;
 
@@ -663,4 +669,50 @@ div.pos-line-deco-head-end {
 
 div#timeline-scrubber {
     background-color: rgba(0, 0, 0, 0);
+}
+
+div.popup {
+    display: flex;
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 72px;
+
+    background-image: linear-gradient(to left, rgba(0, 0, 0, 0), white 5%, white 95%, rgba(0, 0, 0, 0));
+
+    z-index: 9999999;
+
+    animation: 1.5s popupAnim ease-in-out;
+}
+
+div.popup > span {
+    font-family: 'Pretendard-ExtraBold';
+    font-size: 18px;
+    color: #323232;
+}
+
+@keyframes popupAnim {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(16px);
+    }
+    15% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0px);
+    }
+    85% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0px);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-16px);
+    }
 }

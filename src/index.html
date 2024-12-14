@@ -243,27 +243,49 @@
 
                     <hr class="field-group-all">
 
-                    <div class="field-group-all field-double">
+                    <div class="field-group-all field-double stretchy">
                         <div>
-                            <b>Focus X</b>
+                            <b>Focus to X</b>
                             <div class="button white" id="field-dialogue-focx"></div>
                         </div>
-                        <div>
-                            <b>Focus Y</b>
-                            <div class="button white" id="field-dialogue-focy"></div>
-                        </div>
-                    </div>
-                    <div class="field-group-all field-double stretchy">
-                        <b>Focus to X</b>
                         <input type="number" id="field-dialogue-foctox" step="10">
                     </div>
                     <div class="field-group-all field-double stretchy">
-                        <b>Focus to Y</b>
+                        <div>
+                            <b>Focus to Y</b>
+                            <div class="button white" id="field-dialogue-focy"></div>
+                        </div>
                         <input type="number" id="field-dialogue-foctoy" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Focus Zoom</b>
+                            <div class="button white" id="field-dialogue-focz"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-foctoz" step="0.1">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Focus Rotate</b>
+                            <div class="button white" id="field-dialogue-focr"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-foctor" step="10">
                     </div>
                     <div class="field-group-all field-double stretchy">
                         <b>Focus Duration</b>
                         <input type="number" id="field-dialogue-focd" step="0.1" value="0.5" min="0">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Ease Type</b>
+                        <select id="field-dialogue-foceasetype"></select>
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Ease Direction</b>
+                        <select id="field-dialogue-foceasedir">
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                            <option value="InOut">In and Out</option>
+                        </select>
                     </div>
 
                     <hr class="field-group-all">
@@ -320,6 +342,9 @@
                                 <div class="pos-line-deco-butt"></div>
                             </div>
                         </div>
+                    </div>
+                    <div id="timeline-blocker" class="timeline">
+                        <span></span>
                     </div>
                 </div>
                 

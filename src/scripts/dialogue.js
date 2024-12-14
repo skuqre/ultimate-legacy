@@ -72,12 +72,16 @@ var layerBackground = document.getElementById("layer-background");
 var layerCharacter = document.getElementById("layer-character");
 
 function parseDialogue(noTalk = false) {
-    if (curDialogue > curScenario.length - 1) {
+    if (curDialogue > curScenario.length - 1 && curScenario.length > 0) {
+        transitionStinger();
+
         inEditor = true;
         curDialogue = curScenario.length - 1;
-
-        dialogueMain.classList.add("edit-mode");
-        editorMain.style.display = null;
+        
+        setTimeout(() => {
+            dialogueMain.classList.add("edit-mode");
+            editorMain.style.display = null;
+        }, 40 * 20);
 
         return;
     }
@@ -102,6 +106,10 @@ function parseDialogue(noTalk = false) {
 
     dialogueDecoPointer.style.opacity = "0";
     dialogueDecoPointer.style.animation = "unset";
+
+    if (dialogueDecoPointer.classList.contains("narration")) {
+        dialogueDecoPointer.classList.remove("narration");
+    }
 
     switch (curDialogueState) {
         case "speech":
@@ -210,22 +218,25 @@ function parseDialogue(noTalk = false) {
             curDialogueCurTime = 0.0;
             curDialoguePlaying = true;
 
+            dialogueDecoPointer.classList.add("narration");
+
             break;
     }
 
-    if (entry.focusX || entry.focusY) {
+    if (entry.focusX || entry.focusY || entry.focusZ || entry.focusR) {
         const tween = new Tween(camera)
             .to({
                 x: entry.focusX ? entry.focusPosX : camera.x,
                 y: entry.focusY ? entry.focusPosY : camera.y,
+                z: entry.focusZ ? entry.focusZoom : camera.z,
+                r: entry.focusR ? entry.focusRot : camera.r,
             }, (entry.focusDur !== null ? entry.focusDur : 1) * 1000)
-            .easing(Easing.Sinusoidal.InOut)
+            .easing(Easing[entry.focusEaseType][entry.focusEaseDir])
             .onComplete(() => {
                 tweens.splice(tweens.indexOf(tween), 1);
             })
-            .start()
+            .start();
         tweens.push(tween);
-        console.log(tweens.length);
     }
 
     if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
@@ -962,6 +973,7 @@ function updateDialogueList() {
 function selectDialogueEntry(to) {
     if (curScenario.length === 0){
         updateEditPanel();
+        updateTimelineLines();
         return
     }
     
@@ -988,7 +1000,7 @@ function selectDialogueEntry(to) {
 
     for (let i = 0; i < curSelectedEntry; i++) {
         curDialogue = i;
-        parseDialogue();
+        parseDialogue(true);
         
         if (curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
             skipOrProgress();
@@ -1012,11 +1024,17 @@ dialogueAdd.addEventListener("click", () => {
     	speaker: "",
         speakerModel: null,
         speakerModelEmotion: null,
-        focusX: true,
+        focusX: false,
         focusY: false,
+        focusZ: false,
+        focusR: false,
         focusDur: 1,
         focusPosX: 1920 / 2,
         focusPosY: 1080 / 2,
+        focusZoom: 1.0,
+        focusRot: 0,
+        focusEaseType: "Sinusoidal",
+        focusEaseDir: "InOut",
     	content: "",
     	keyframes: [],
         keyframeDuration: null,
@@ -1308,9 +1326,16 @@ const fieldDialogueMatchInit = document.getElementById("field-dialogue-matchinit
 
 const fieldDialogueFocusX = document.getElementById("field-dialogue-focx");
 const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
-const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
+const fieldDialogueFocusZ = document.getElementById("field-dialogue-focz");
+const fieldDialogueFocusR = document.getElementById("field-dialogue-focr");
 const fieldDialogueFocusPosX = document.getElementById("field-dialogue-foctox");
 const fieldDialogueFocusPosY = document.getElementById("field-dialogue-foctoy");
+const fieldDialogueFocusPosZ = document.getElementById("field-dialogue-foctoz");
+const fieldDialogueFocusPosR = document.getElementById("field-dialogue-foctor");
+
+const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
+const fieldDialogueEaseType = document.getElementById("field-dialogue-foceasetype");
+const fieldDialogueEaseDir = document.getElementById("field-dialogue-foceasedir");
 
 const fieldDialogueTLDur = document.getElementById("field-dialogue-tldur");
 
@@ -1341,7 +1366,7 @@ function updateEditPanel() {
     }
 
     const allGroup = document.getElementsByClassName("field-group-all");
-    if (entry.type === "" || entry.type === "Choice") {
+    if (entry.type === "") {
         for (const e of allGroup) {
             e.style.display = "none";
         }
@@ -1360,9 +1385,23 @@ function updateEditPanel() {
 
     fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFocusZ.innerHTML = entry.focusZ ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFocusR.innerHTML = entry.focusR ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFocusPosX.value = entry.focusPosX;
     fieldDialogueFocusPosY.value = entry.focusPosY;
+    fieldDialogueFocusPosZ.value = entry.focusZoom;
+    fieldDialogueFocusPosR.value = entry.focusRot;
     fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
+
+    fieldDialogueEaseType.innerHTML = "";
+    for (const i of Object.getOwnPropertyNames(Easing)) {
+        if (i.trim().toLowerCase() !== "generatepow") {
+            fieldDialogueEaseType.innerHTML += `<option value="${i}">${i}</option>`
+        }
+    }
+
+    fieldDialogueEaseType.value = entry.focusEaseType;
+    fieldDialogueEaseDir.value = entry.focusEaseDir;
 
     if (entry.focusX) {
         fieldDialogueFocusPosX.removeAttribute("disabled");
@@ -1374,6 +1413,18 @@ function updateEditPanel() {
         fieldDialogueFocusPosY.removeAttribute("disabled");
     } else {
         fieldDialogueFocusPosY.setAttribute("disabled", "");
+    }
+
+    if (entry.focusZ) {
+        fieldDialogueFocusPosZ.removeAttribute("disabled");
+    } else {
+        fieldDialogueFocusPosZ.setAttribute("disabled", "");
+    }
+
+    if (entry.focusR) {
+        fieldDialogueFocusPosR.removeAttribute("disabled");
+    } else {
+        fieldDialogueFocusPosR.setAttribute("disabled", "");
     }
 
     const num = Math.max(entry.keyframeDuration, calcLength(entry.content));
@@ -1640,6 +1691,24 @@ fieldDialogueFocusY.addEventListener("click", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueFocusZ.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusZ = !entry.focusZ;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFocusR.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusR = !entry.focusR;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueFocusPosX.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
@@ -1658,6 +1727,24 @@ fieldDialogueFocusPosY.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueFocusPosZ.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusZoom = parseFloat(fieldDialogueFocusPosZ.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFocusPosR.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusRot = parseFloat(fieldDialogueFocusPosR.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueFocusDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
@@ -1666,6 +1753,24 @@ fieldDialogueFocusDur.addEventListener("change", () => {
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
 })
+
+fieldDialogueEaseType.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusEaseType = fieldDialogueEaseType.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueEaseDir.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.focusEaseDir = fieldDialogueEaseDir.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
 
 fieldDialogueTLDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
@@ -1896,6 +2001,8 @@ fieldWorldInitCamR.addEventListener("input", () => {
 });
 
 const timelineMain = document.getElementById("timeline-main");
+const timelineBlocker = document.getElementById("timeline-blocker");
+const timelineBlockerText = document.querySelector("div#timeline-blocker > span");
 
 const fieldTimelineZoom = document.getElementById("field-timeline-zoom");
 const fieldTimelineCurTime = document.getElementById("field-timeline-curtime");
@@ -1905,7 +2012,21 @@ let timelineZoom = 1.0;
 function updateTimelineLines() {
     timelineMain.innerHTML = "";
 
+    if (!curScenario[curDialogue]) {
+        timelineBlocker.style.display = null;
+        timelineBlockerText.innerHTML = ""
+        return;
+    } else if (curScenario[curDialogue].type === "Choice") {
+        timelineBlocker.style.display = null;
+        timelineBlockerText.innerHTML = "Keyframes are unavailable for Choice type entries."
+        return;
+    } else {
+        timelineBlocker.style.display = "none";
+        timelineBlockerText.innerHTML = ""
+    }
+
     const entry = curScenario[curDialogue];
+
     if (!entry.keyframeDuration || entry.keyframeDuration <= 0) return;
 
     let curX = 16;
@@ -1956,25 +2077,34 @@ fieldTimelineMaxTime.addEventListener("change", () => {
 const timelinePresent = document.getElementById("timeline-present");
 
 timelinePresent.addEventListener("click", () => {
+    if (!inEditor) return;
+
     if (curScenario.length === 0) {
+        popUpError("There are no dialogue entries to present.")
         return;
     }
-    
-    inEditor = false;
 
-    curDialogue = 0;
-    curDialogueCurTime = 0;
-    curDialoguePlaying = true;
-
-    hasLoaded = false;
-    init();
+    transitionStinger();
 
     for (const i of tweens) {
         i.end();
     }
 
-    dialogueMain.classList.remove("edit-mode");
-    editorMain.style.display = "none";
+    setTimeout(() => {
+        dialogueMain.classList.remove("edit-mode");
+        editorMain.style.display = "none";
+    }, 35 * 20)
+
+    setTimeout(() => {
+        inEditor = false;
+    
+        hasLoaded = false;
+        init();
+
+        curDialogue = 0;
+        curDialogueCurTime = 0;
+        curDialoguePlaying = true;
+    }, 40 * 20) 
 });
 
 var mouseCapture = [];
