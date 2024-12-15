@@ -93,7 +93,10 @@ function popUpError(text) {
     }, 1400);
 }
 
-function transitionStinger() {
+const sfxTransIn = new Audio("../assets/sounds/trans_in.wav");
+const sfxTransOut = new Audio("../assets/sounds/trans_out.wav");
+
+function transitionStinger(manual = false) {
     const main = document.createElement("div");
     main.classList.add("stinger-main");
     main.style.backdropFilter = "blur(4px)";
@@ -129,16 +132,31 @@ function transitionStinger() {
                         icon.style.animation = "stinger-icon-animation 1s steps(30)";
                     }
 
-                    setTimeout(() => {
-                        if (i == 17 && j == 21) {
-                            main.remove();
-                        }
+                    sfxTransIn.play();
 
-                        main.style.backdropFilter = "";
-                        div.style.transform = "scaleY(0%)";
-                        div.style.opacity = 0;
-                        div.style.backgroundColor = "#555555";
-                    }, 550);
+                    function transOut() {
+                        setTimeout(() => {
+                            if (i == 17 && j == 21) {
+                                main.remove();
+                            }
+    
+                            main.style.backdropFilter = "";
+                            div.style.transform = "scaleY(0%)";
+                            div.style.opacity = 0;
+                            div.style.backgroundColor = "#555555";
+    
+                            sfxTransOut.play()
+                        }, 550);
+                    }
+
+                    if (!manual) {
+                        transOut();
+                    } else {
+                        main.onclick = () => {
+                            transOut();
+                            main.onclick = null;
+                        }
+                    }
                 }, j * 20);
             }
         }, i * 20);

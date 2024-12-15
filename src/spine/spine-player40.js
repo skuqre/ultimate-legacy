@@ -12104,7 +12104,7 @@ ${e.message}`, e);
       let minX = 1e8, maxX = -1e8, minY = 1e8, maxY = -1e8;
       let offset = new Vector2(), size = new Vector2();
       for (let i = 0; i < steps; i++, time += stepTime) {
-        animation.apply(this.skeleton, time, time, false, null, 1, MixBlend.setup, MixDirection.mixIn);
+        // animation.apply(this.skeleton, time, time, false, null, 1, MixBlend.setup, MixDirection.mixIn);
         this.skeleton.updateWorldTransform();
         this.skeleton.getBounds(offset, size);
         if (!isNaN(offset.x) && !isNaN(offset.y) && !isNaN(size.x) && !isNaN(size.y)) {

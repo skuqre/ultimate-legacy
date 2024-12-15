@@ -63,7 +63,7 @@ div#layer-background > img {
 
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%);
 }
 
 div.overlay-sides {
@@ -547,9 +547,11 @@ div.stinger-box {
 
     transform-origin: 50% 50%;
     transform: scaleY(0%);
-    scale: 1.05;
+    scale: 1.02;
 
-    transition: opacity 0.05s ease-in-out, background-color 0.1s linear, transform 0.05s ease-in-out;
+    transition: opacity 0.05s cubic-bezier(0.37, 0, 0.63, 1),
+                background-color 0.1s cubic-bezier(0.37, 0, 0.63, 1),
+                transform 0.05s cubic-bezier(0.37, 0, 0.63, 1);
 }
 
 div.stinger-icon {

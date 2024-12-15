@@ -15,8 +15,10 @@ const psb = new FontFace('Pretendard-SemiBold', "url('../assets/fonts/Pretendard
 await psb.load();
 document.fonts.add(psb);
 
-const canvas = document.createElement("canvas");
+const canvas = document.createElement("canvas");``
 const ctx = canvas.getContext("2d");
+
+const sfxType = new Audio("../assets/sounds/dialogue_type.wav");
 
 var camera = {
     initX: 1920 * 0.5,
@@ -26,6 +28,18 @@ var camera = {
     x: 0,
     y: 0,
     z: 1.0,
+    r: 0
+}
+var bg = {
+    initLink: "https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png",
+    initX: 1920 * 0.5,
+    initY: 1080 * 0.5,
+    initS: 1.2,
+    initR: 0,
+    link: "",
+    x: 0,
+    y: 0,
+    s: 1.0,
     r: 0
 }
 var curColorDefinitions = {}
@@ -70,6 +84,8 @@ var layerControls = document.getElementById("layer-controls");
 var layerWorld = document.getElementById("layer-world");
 var layerBackground = document.getElementById("layer-background");
 var layerCharacter = document.getElementById("layer-character");
+
+const backgroundMain = document.getElementById("background-main");
 
 function parseDialogue(noTalk = false) {
     if (curDialogue > curScenario.length - 1 && curScenario.length > 0) {
@@ -390,8 +406,14 @@ function setText(text) {
     curDialogueMaxTime = calcLength(text);
 }
 
+let prev = 0;
+
 function updateText() {
     const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4 / 60)), 0, curDialogueContent.length);
+
+    if (prev !== lettersToDisplay && !["narration", "monologue", "choice"].includes(curDialogueState)) {
+        sfxType.play();
+    }
 
     for (let i = 0; i < curDialogueContent.length; i++) {
         curDialogueContent[i].style.opacity = "0";
@@ -400,6 +422,8 @@ function updateText() {
     for (let i = 0; i < lettersToDisplay; i++) {
         curDialogueContent[i].style.opacity = "1";
     }
+
+    prev = lettersToDisplay
 }
 
 /**
@@ -692,11 +716,20 @@ function dialogueLoop(elapsed) {
 /**
  * camera update
  */
+
+var curBgLink = "";
 function cameraLoop(elapsed) {
     layerBackground.style.transform = `
-    translateX(${(1920 * 0.5 + ((1920 * 0.5 - camera.x) * 0.1))}px)
-    translateY(${(1080 * 0.5 + ((1080 * 0.5 - camera.y) * 0.1))}px)
+    translateX(${(bg.x + ((bg.x - camera.x) * 0.1))}px)
+    translateY(${(bg.y + ((bg.y - camera.y) * 0.1))}px)
+    scale(${bg.s})
+    rotate(${bg.r}deg)
     `;
+
+    if (curBgLink !== bg.link) {
+        curBgLink = bg.link;
+        backgroundMain.src = curBgLink;
+    }
 
     layerCharacter.style.transform = `
     translateX(${((1920 * 0.5 - camera.x))}px)
@@ -766,6 +799,12 @@ function initPositions() {
     camera.y = camera.initY;
     camera.z = camera.initZ;
     camera.r = camera.initR;
+
+    bg.link = bg.initLink;
+    bg.x = bg.initX;
+    bg.y = bg.initY;
+    bg.s = bg.initS;
+    bg.r = bg.initR;
 
     // initialize character positions
     for (const i of curCharacters) {
@@ -1712,7 +1751,7 @@ fieldDialogueFocusR.addEventListener("click", () => {
 fieldDialogueFocusPosX.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
-    entry.focusPosX = parseInt(fieldDialogueFocusPosX.value);
+    entry.focusPosX = parseFloat(fieldDialogueFocusPosX.value);
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
@@ -1721,7 +1760,7 @@ fieldDialogueFocusPosX.addEventListener("input", () => {
 fieldDialogueFocusPosY.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
-    entry.focusPosY = parseInt(fieldDialogueFocusPosY.value);
+    entry.focusPosY = parseFloat(fieldDialogueFocusPosY.value);
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
@@ -1861,6 +1900,11 @@ function updateInspectorPanel() {
         fieldWorldInitCamY.value = camera.initY;
         fieldWorldInitCamZ.value = camera.initZ;
         fieldWorldInitCamR.value = camera.initR;
+
+        fieldWorldInitBGX.value = bg.initX;
+        fieldWorldInitBGY.value = bg.initY;
+        fieldWorldInitBGS.value = bg.initS;
+        fieldWorldInitBGR.value = bg.initR;
     }
     
     const selectedGroupElement = document.getElementsByClassName("field-group-" + selectedGroupName);
@@ -1923,7 +1967,7 @@ fieldCharacterInitX.addEventListener("input", () => {
     if (curSelectedCharacter === null) return;
     const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
 
-    character.initTransforms.x = parseInt(fieldCharacterInitX.value);
+    character.initTransforms.x = parseFloat(fieldCharacterInitX.value);
 
     selectCharacterEntry(curSelectedCharacter);
     updatePositionsToLatest();
@@ -1933,7 +1977,7 @@ fieldCharacterInitY.addEventListener("input", () => {
     if (curSelectedCharacter === null) return;
     const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
 
-    character.initTransforms.y = parseInt(fieldCharacterInitY.value);
+    character.initTransforms.y = parseFloat(fieldCharacterInitY.value);
 
     selectCharacterEntry(curSelectedCharacter);
     updatePositionsToLatest();
@@ -1943,7 +1987,7 @@ fieldCharacterInitR.addEventListener("input", () => {
     if (curSelectedCharacter === null) return;
     const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
 
-    character.initTransforms.rotate = parseInt(fieldCharacterInitR.value);
+    character.initTransforms.rotate = parseFloat(fieldCharacterInitR.value);
 
     selectCharacterEntry(curSelectedCharacter);
     updatePositionsToLatest();
@@ -1975,10 +2019,47 @@ worldOpen.addEventListener("click", () => {
     selectCharacterEntry(null);
 });
 
+const fieldWorldInitBGLink = document.getElementById("field-world-initbglink");
+const fieldWorldInitBGLoad = document.getElementById("field-world-initbgload");
+
+const fieldWorldInitBGX = document.getElementById("field-world-initbgx");
+const fieldWorldInitBGY = document.getElementById("field-world-initbgy");
+const fieldWorldInitBGS = document.getElementById("field-world-initbgs");
+const fieldWorldInitBGR = document.getElementById("field-world-initbgr");
+
 const fieldWorldInitCamX = document.getElementById("field-world-initcamx");
 const fieldWorldInitCamY = document.getElementById("field-world-initcamy");
 const fieldWorldInitCamZ = document.getElementById("field-world-initcamz");
 const fieldWorldInitCamR = document.getElementById("field-world-initcamr");
+
+fieldWorldInitBGLink.addEventListener("input", () => {
+    bg.initLink = fieldWorldInitBGLink.value.trim();
+    updatePositionsToLatest();
+});
+
+fieldWorldInitBGLoad.addEventListener("input", () => {
+    
+});
+
+fieldWorldInitBGX.addEventListener("input", () => {
+    bg.initX = parseFloat(fieldWorldInitBGX.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitBGY.addEventListener("input", () => {
+    bg.initY = parseFloat(fieldWorldInitBGY.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitBGS.addEventListener("input", () => {
+    bg.initS = parseFloat(fieldWorldInitBGS.value);
+    updatePositionsToLatest();
+});
+
+fieldWorldInitBGR.addEventListener("input", () => {
+    bg.initR = parseFloat(fieldWorldInitBGR.value);
+    updatePositionsToLatest();
+});
 
 fieldWorldInitCamX.addEventListener("input", () => {
     camera.initX = parseFloat(fieldWorldInitCamX.value);

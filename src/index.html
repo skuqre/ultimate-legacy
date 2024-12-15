@@ -15,7 +15,7 @@
     <div id="dialogue-main" class="edit-mode">
         <div class="layer-world" id="layer-world">
             <div id="layer-background">
-                <img src="https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png" alt="">
+                <img src="https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png" alt="" id="background-main">
             </div>
             <div id="layer-character"></div>
         </div>
@@ -170,6 +170,30 @@
                     <div class="field-group-world field-double stretchy">
                         <b>Initial Camera Rotate</b>
                         <input type="number" id="field-world-initcamr" step="10">
+                    </div>
+                    <div class="field-group-world">
+                        <hr>
+                    </div>
+                    <div class="field-group-world">
+                        <b>Initial Background</b>
+                        <input type="text" id="field-world-initbglink" placeholder="Link to an image...">
+                        <div class="generic-button green fullwidth" id="field-world-initbgload">Load a file from storage...</div>
+                    </div>
+                    <div class="field-group-world field-double stretchy">
+                        <b>Initial Background X</b>
+                        <input type="number" id="field-world-initbgx" step="10">
+                    </div>
+                    <div class="field-group-world field-double stretchy">
+                        <b>Initial Background Y</b>
+                        <input type="number" id="field-world-initbgy" step="10">
+                    </div>
+                    <div class="field-group-world field-double stretchy">
+                        <b>Initial Background Scale</b>
+                        <input type="number" id="field-world-initbgs" step="0.1">
+                    </div>
+                    <div class="field-group-world field-double stretchy">
+                        <b>Initial Background Rotate</b>
+                        <input type="number" id="field-world-initbgr" step="10">
                     </div>
 
                 </div>
