@@ -55,6 +55,13 @@ function mouseOver(id, event) {
         (event.clientY >= rect.y && event.clientY <= rect.y + rect.height));
 }
 
+function mouseOverElement(element, event) {
+    const rect = element.getBoundingClientRect();
+
+    return ((event.clientX >= rect.x && event.clientX <= rect.x + rect.width) &&
+        (event.clientY >= rect.y && event.clientY <= rect.y + rect.height));
+}
+
 const PIXELS_PER_SECOND = 48;
 
 function secondsToPixel(seconds, zoom) {

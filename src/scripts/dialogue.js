@@ -20,6 +20,10 @@ const ctx = canvas.getContext("2d");
 
 const sfxType = new Audio("../assets/sounds/dialogue_type.wav");
 
+const sfxChoiceEnter = new Audio("../assets/sounds/choice_enter.wav");
+const sfxChoiceSelect = new Audio("../assets/sounds/choice_select.wav");
+const sfxChoiceError = new Audio("../assets/sounds/choice_error.wav");
+
 var camera = {
     initX: 1920 * 0.5,
     initY: 1080 * 0.5,
@@ -69,6 +73,8 @@ var dialogueNarrationBox = document.getElementById("dialogue-element-narrationbo
 var dialogueNarrationText = document.querySelector("div#dialogue-element-narrationbox > span");
 var dialogueChoiceList = document.getElementById("dialogue-container-choices");
 
+var dialogueDarkener = document.getElementById("dialogue-container-darkener");
+
 var dialogueDecoPointer = document.getElementById("dialogue-deco-pointer");
 var dialogueDecoMesh = document.getElementById("dialogue-deco-mesh");
 
@@ -92,11 +98,12 @@ function parseDialogue(noTalk = false) {
         transitionStinger();
 
         inEditor = true;
-        curDialogue = curScenario.length - 1;
+        curDialogue = curSelectedEntry;
         
         setTimeout(() => {
             dialogueMain.classList.add("edit-mode");
             editorMain.style.display = null;
+            selectDialogueEntry(curSelectedEntry);
         }, 40 * 20);
 
         return;
@@ -123,9 +130,17 @@ function parseDialogue(noTalk = false) {
     dialogueDecoPointer.style.opacity = "0";
     dialogueDecoPointer.style.animation = "unset";
 
+    dialogueDarkener.style.display = "none";
+
     if (dialogueDecoPointer.classList.contains("narration")) {
         dialogueDecoPointer.classList.remove("narration");
     }
+
+    while (dialogueChoiceList.firstChild) {
+        dialogueChoiceList.removeChild(dialogueChoiceList.lastChild);
+    }
+
+    curDialogueChoiceElements = [];
 
     switch (curDialogueState) {
         case "speech":
@@ -191,6 +206,8 @@ function parseDialogue(noTalk = false) {
             dialogueContainerChoice.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
 
+            sfxChoiceEnter.play();
+
             curDialogueChoices = [];
 
             for (let i = 0; i < entry.choices.length; i++) {
@@ -255,13 +272,24 @@ function parseDialogue(noTalk = false) {
         tweens.push(tween);
     }
 
-    if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
-        curDialogueMaxTime = entry.keyframeDuration;
+    if (entry.fadeIn) {
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.fadeInDur !== null ? entry.fadeInDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                layerControls.style.backgroundColor = `rgba(0, 0, 0, ${1 - n.perc})`
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
     }
 
-    if (skipNext) {
-        curDialogueCurTime = curDialogueMaxTime;
-        skipNext = false;
+    if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
+        curDialogueMaxTime = entry.keyframeDuration;
     }
 }
 
@@ -331,8 +359,6 @@ function controlCommonRelease(parentElement) {
     parentElement.style.scale = "1";
     parentElement.style.filter = "brightness(100%)";
 }
-
-var skipNext = false;
 
 window.addEventListener("click", (e) => {
     if (inEditor) return;
@@ -523,6 +549,8 @@ function updateChoices() {
         main.onmouseup = (e) => {
             choiceCommonRelease(span.parentElement);
 
+            sfxChoiceSelect.play();
+
             setTimeout(() => {
                 curDialogueChoiceElements = [];
                 parseChoice(choice);
@@ -544,6 +572,12 @@ function updateChoices() {
 
         dialogueChoiceList.appendChild(main);
         curDialogueChoiceElements.push(main);
+    }
+
+    if (curDialogueChoices.length > 1) {
+        dialogueDarkener.style.display = "block";
+    } else {
+        dialogueDarkener.style.display = "none";
     }
 }
 
@@ -662,8 +696,29 @@ function skipOrProgress() {
             i.end();
         }
     } else {
-        curDialogue++;
-        parseDialogue();
+        const entry = curScenario[curDialogue];
+
+        if (entry.fadeOut) {
+            const tween = new Tween({perc: 0})
+                .to({
+                    perc: 1
+                }, (entry.fadeOutDur !== null ? entry.fadeOutDur : 1) * 1000)
+                .easing(Easing.Sinusoidal.InOut)
+                .onUpdate((n) => {
+                    layerControls.style.backgroundColor = `rgba(0, 0, 0, ${n.perc})`
+                })
+                .onComplete(() => {
+                    tweens.splice(tweens.indexOf(tween), 1);
+
+                    curDialogue++;
+                    parseDialogue();
+                })
+                .start();
+            tweens.push(tween);
+        } else {
+            curDialogue++;
+            parseDialogue();
+        }
     }
 }
 
@@ -775,11 +830,13 @@ function init() {
         if (charsLoaded.length === curCharacters.length) {
             parseDialogue();
 
-            updateDialogueList();
-            selectDialogueEntry(0);
+            if (inEditor) {
+                updateDialogueList();
+                selectDialogueEntry(0);
 
-            updateCharacterList();
-            selectCharacterEntry(null);
+                updateCharacterList();
+                selectCharacterEntry(null);
+            }
 
             initPositions();
 
@@ -902,10 +959,27 @@ window.addEventListener("keyup", (e) => {
     }
 });
 
+let shakeTimeout = null
+
 window.addEventListener("click", (e) => {
     if (inEditor) return;
     if (!curScenarioShown) return;
-    if (curDialogueChoiceElements.length > 0) return;
+    if (curDialogueChoiceElements.length > 0) {
+        if (curDialogueChoiceElements.filter(el => mouseOverElement(el, e)).length === 0) {
+            sfxChoiceError.cloneNode().play();
+
+            dialogueChoiceList.style.animation = "choice-shake 0.2s infinite"
+
+            if (shakeTimeout) {
+                clearInterval(shakeTimeout);
+            }
+
+            shakeTimeout = setTimeout(() => {
+                dialogueChoiceList.style.animation = null;
+            }, 200);
+        }
+        return;
+    }
     skipOrProgress();
 });
 
@@ -1013,7 +1087,7 @@ function selectDialogueEntry(to) {
     if (curScenario.length === 0){
         updateEditPanel();
         updateTimelineLines();
-        return
+        return;
     }
     
     curSelectedEntry = to;
@@ -1058,11 +1132,12 @@ function selectDialogueEntry(to) {
 }
 
 dialogueAdd.addEventListener("click", () => {
-    curScenario.push({
+    const newEntry = {
     	type: "",
     	speaker: "",
         speakerModel: null,
         speakerModelEmotion: null,
+
         focusX: false,
         focusY: false,
         focusZ: false,
@@ -1074,15 +1149,23 @@ dialogueAdd.addEventListener("click", () => {
         focusRot: 0,
         focusEaseType: "Sinusoidal",
         focusEaseDir: "InOut",
+
+        fadeIn: false,
+        fadeOut: false,
+        fadeInDur: 1,
+        fadeOutDur: 1,
+
     	content: "",
     	keyframes: [],
         keyframeDuration: null,
     	time: null,
     	choices: null
-    });
+    }
+
+    curScenario.splice(curDialogue + 1, 0, newEntry);
 
     updateDialogueList();
-    selectDialogueEntry(curScenario.length - 1);
+    selectDialogueEntry(curScenario.indexOf(newEntry));
 });
 
 dialogueDel.addEventListener("click", () => {
@@ -1376,10 +1459,18 @@ const fieldDialogueFocusDur = document.getElementById("field-dialogue-focd");
 const fieldDialogueEaseType = document.getElementById("field-dialogue-foceasetype");
 const fieldDialogueEaseDir = document.getElementById("field-dialogue-foceasedir");
 
+const fieldDialogueFadeIn = document.getElementById("field-dialogue-fadein");
+const fieldDialogueFadeOut = document.getElementById("field-dialogue-fadeout");
+const fieldDialogueFadeInDur = document.getElementById("field-dialogue-fadeindur");
+const fieldDialogueFadeOutDur = document.getElementById("field-dialogue-fadeoutdur");
+
 const fieldDialogueTLDur = document.getElementById("field-dialogue-tldur");
 
 const fieldNarrationContent = document.getElementById("field-dialogue-ncontent");
 const fieldMonologueContent = document.getElementById("field-dialogue-mcontent");
+
+const fieldChoiceAdd = document.getElementById("field-choice-add");
+const fieldChoiceList = document.getElementById("field-choice-list");
 
 function updateEditPanel() {
     const entry = curScenario[curDialogue];
@@ -1432,6 +1523,11 @@ function updateEditPanel() {
     fieldDialogueFocusPosR.value = entry.focusRot;
     fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
 
+    fieldDialogueFadeIn.innerHTML = entry.fadeIn ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFadeOut.innerHTML = entry.fadeOut ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFadeInDur.value = entry.fadeInDur;
+    fieldDialogueFadeOutDur.value = entry.fadeOutDur;
+
     fieldDialogueEaseType.innerHTML = "";
     for (const i of Object.getOwnPropertyNames(Easing)) {
         if (i.trim().toLowerCase() !== "generatepow") {
@@ -1464,6 +1560,18 @@ function updateEditPanel() {
         fieldDialogueFocusPosR.removeAttribute("disabled");
     } else {
         fieldDialogueFocusPosR.setAttribute("disabled", "");
+    }
+
+    if (entry.fadeIn) {
+        fieldDialogueFadeInDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueFadeInDur.setAttribute("disabled", "");
+    }
+
+    if (entry.fadeOut) {
+        fieldDialogueFadeOutDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueFadeOutDur.setAttribute("disabled", "");
     }
 
     const num = Math.max(entry.keyframeDuration, calcLength(entry.content));
@@ -1510,7 +1618,28 @@ function updateEditPanel() {
             }
             break;
         case "Choice":
-            break
+            fieldChoiceList.innerHTML = "";
+
+            for (const i of entry.choices) {
+                const div = document.createElement("div")
+                div.classList.add("generic-list-item");
+        
+                const choiceText = document.createElement("textarea")
+                choiceText.value = i.text;
+                choiceText.style.height = "32px";
+                div.appendChild(choiceText);
+
+                const immut = entry.choices.indexOf(i);
+        
+                choiceText.onchange = () => {
+                    entry.choices[immut].text = choiceText.value;
+
+                    updateDialogueList();
+                    selectDialogueEntry(curSelectedEntry);
+                }
+
+                fieldChoiceList.appendChild(div);
+            }
         case "Narration":
             fieldNarrationContent.value = entry.content;
             break;
@@ -1811,6 +1940,42 @@ fieldDialogueEaseDir.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueFadeIn.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeIn = !entry.fadeIn;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFadeOut.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeOut = !entry.fadeOut;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFadeInDur.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeInDur = fieldDialogueFadeInDur.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFadeOutDur.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeOutDur = fieldDialogueFadeOutDur.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueTLDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
@@ -1846,6 +2011,18 @@ fieldMonologueContent.addEventListener("change", () => {
     if (entry.keyframeDuration < calcLength(entry.content)) {
         entry.keyframeDuration = calcLength(entry.content);
     }
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldChoiceAdd.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.choices.push({
+        text: "Choice",
+        jump: null
+    });
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);

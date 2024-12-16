@@ -38,6 +38,7 @@
                 <div id="dialogue-text-content"></div>
             </div>
 
+            <div id="dialogue-container-darkener"></div>
             <div id="dialogue-container-choices" style="opacity: 0;" class="list choices"></div>
 
             <div id="dialogue-container-narration" style="opacity: 0;">
@@ -243,9 +244,7 @@
                         <select id="field-dialogue-emotion"></select>
                         <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match initial emotion</div>
                     </div>
-                    <div class="field-group-speech">
-                        <hr>
-                    </div>
+                    <hr class="field-group-speech">
                     <div class="field-group-speech">
                         <b>Name</b>
                         <input type="text" id="field-dialogue-name" placeholder="Speaker's name here..." />
@@ -253,6 +252,11 @@
                     <div class="field-group-speech">
                         <b>Content</b>
                         <textarea id="field-dialogue-content"></textarea>
+                    </div>
+
+                    <div class="field-group-choice stretchy">
+                        <div class="generic-button white fullwidth" id="field-choice-add">Add new choice</div>
+                        <div class="generic-list alternating" id="field-choice-list"></div>
                     </div>
 
                     <div class="field-group-narration">
@@ -310,6 +314,23 @@
                             <option value="Out">Out</option>
                             <option value="InOut">In and Out</option>
                         </select>
+                    </div>
+
+                    <hr class="field-group-all">
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Fade In</b>
+                            <div class="button white" id="field-dialogue-fadein"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-fadeindur" step="0.1">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Fade Out</b>
+                            <div class="button white" id="field-dialogue-fadeout"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-fadeoutdur" step="0.1">
                     </div>
 
                     <hr class="field-group-all">
