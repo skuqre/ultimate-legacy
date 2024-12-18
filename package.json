@@ -22,7 +22,9 @@
     "electron": "^31.1.0"
   },
   "dependencies": {
+    "@electron/remote": "^2.1.2",
     "@tweenjs/tween.js": "^25.0.0",
+    "electron-prompt": "^1.7.0",
     "electron-squirrel-startup": "^1.0.1",
     "fuzzysort": "^3.1.0"
   }

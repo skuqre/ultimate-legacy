@@ -225,6 +225,17 @@ input.time-input {
     text-align: center;
 }
 
+div.generic-button > input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    
+    width: 100%;
+    height: 100%;
+
+    opacity: 0;
+}
+
 textarea#field-dialogue-content,
 textarea#field-dialogue-ncontent,
 textarea#field-dialogue-mcontent,
@@ -412,6 +423,8 @@ div.popup-button-tray > div.button {
 }
 
 div.generic-button {
+    position: relative;
+
     width: min-content;
     padding: 4px 16px;
     font-size: 16px;
@@ -515,6 +528,15 @@ div.field-double > div {
     justify-content: space-between;
     
     flex-basis: 50%;
+}
+
+
+div.field-double.nearer {
+    gap: 4px !important;
+}
+
+div.field-double.nearer > div {
+    justify-content: center;
 }
 
 div#viewport-main {

@@ -21,6 +21,9 @@ const createWindow = () => {
         // fullscreen: true
     });
 
+    require('@electron/remote/main').initialize();
+    require("@electron/remote/main").enable(mainWindow.webContents);
+
     mainWindow.webContents.openDevTools();
     mainWindow.loadFile('src/index.html');
 

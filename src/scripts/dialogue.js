@@ -3,6 +3,9 @@ This script handles dialogue playback and editor logic.
 */
 
 const { Tween, Easing } = require("@tweenjs/tween.js");
+const { webUtils } = require('electron');
+const path = require("node:path");
+const prompt = require("electron-prompt");
 const fuzzysort = require("fuzzysort");
 
 var inEditor = true;
@@ -24,6 +27,10 @@ const sfxChoiceEnter = new Audio("../assets/sounds/choice_enter.wav");
 const sfxChoiceSelect = new Audio("../assets/sounds/choice_select.wav");
 const sfxChoiceError = new Audio("../assets/sounds/choice_error.wav");
 
+var curBgmPlaying = new Audio();
+var curSfxPlaying = new Audio();
+var curVoPlaying = new Audio();
+
 var camera = {
     initX: 1920 * 0.5,
     initY: 1080 * 0.5,
@@ -35,7 +42,7 @@ var camera = {
     r: 0
 }
 var bg = {
-    initLink: "https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png",
+    initLink: "CommanderRoom",
     initX: 1920 * 0.5,
     initY: 1080 * 0.5,
     initS: 1.2,
@@ -46,6 +53,15 @@ var bg = {
     s: 1.0,
     r: 0
 }
+
+var loadedBgs = {
+    "CommanderRoom": "https://skuqre.github.io/nikke-font-generator/images/dialogue/bgs/CommanderRoom.png"
+}
+
+var loadedBgm = {}
+var loadedSfx = {}
+var loadedVo = {}
+
 var curColorDefinitions = {}
 var curCharacters = [];
 var curScenario = [];
@@ -323,6 +339,53 @@ function parseDialogue(noTalk = false) {
             })
             .start();
         tweens.push(tween);
+    }
+
+    if (entry.bgm.key !== null) {
+        curBgmPlaying.pause();
+
+        curBgmPlaying.src = loadedBgm[entry.bgm.key];
+        curBgmPlaying.loop = true;
+        curBgmPlaying.load();
+        curBgmPlaying.play();
+        
+        if (entry.bgm.fade) {
+            const tween = new Tween({perc: 0})
+                .to({
+                    perc: 1
+                }, (entry.bgm.fadeDur !== null ? entry.bgm.fadeDur : 1) * 1000)
+                .easing(Easing.Sinusoidal.InOut)
+                .onUpdate((n) => {
+                    curBgmPlaying.volume = n.perc * entry.bgm.volume;
+                })
+                .onComplete(() => {
+                    tweens.splice(tweens.indexOf(tween), 1);
+                })
+                .start();
+            tweens.push(tween);
+        } else {
+            curBgmPlaying.volume = entry.bgm.volume;
+        }
+    }
+
+    if (entry.sfx.key !== null) {
+        curSfxPlaying.pause();
+
+        curSfxPlaying.src = loadedSfx[entry.sfx.key];
+        curSfxPlaying.loop = false;
+        curSfxPlaying.volume = entry.sfx.volume;
+        curSfxPlaying.load();
+        curSfxPlaying.play();
+    }
+
+    if (entry.vo.key !== null) {
+        curVoPlaying.pause();
+
+        curVoPlaying.src = loadedVo[entry.vo.key];
+        curVoPlaying.loop = false;
+        curVoPlaying.volume = entry.vo.volume;
+        curVoPlaying.load();
+        curVoPlaying.play();
     }
 
     if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
@@ -873,7 +936,7 @@ function cameraLoop(elapsed) {
 
     if (curBgLink !== bg.link) {
         curBgLink = bg.link;
-        backgroundMain.src = curBgLink;
+        backgroundMain.src = loadedBgs[curBgLink];
     }
 
     layerCharacter.style.transform = `
@@ -1264,6 +1327,21 @@ dialogueAdd.addEventListener("click", () => {
         fadeOutDur: 1,
         fadeBlackDur: 1,
 
+        bgm: {
+            key: null,
+            volume: 1,
+            fade: false,
+            fadeDur: 0.5
+        },
+        sfx: {
+            key: null,
+            volume: 1
+        },
+        vo: {
+            key: null,
+            volume: 1
+        },
+
     	content: "",
     	keyframes: [],
         keyframeDuration: null,
@@ -1575,6 +1653,23 @@ const fieldDialogueFadeInDur = document.getElementById("field-dialogue-fadeindur
 const fieldDialogueFadeOutDur = document.getElementById("field-dialogue-fadeoutdur");
 const fieldDialogueFadeBlackDur = document.getElementById("field-dialogue-fadeblackdur");
 
+const fieldDialoguePlayBGM = document.getElementById("field-dialogue-playbgm");
+const fieldDialoguePlayBGMLink = document.getElementById("field-dialogue-playbgmlink");
+const fieldDialoguePlayBGMLoad = document.getElementById("field-dialogue-playbgmload");
+const fieldDialoguePlayBGMVolume = document.getElementById("field-dialogue-bgmvolval");
+const fieldDialoguePlayBGMFade = document.getElementById("field-dialogue-bgmfade");
+const fieldDialoguePlayBGMFadeDur = document.getElementById("field-dialogue-bgmfadedur");
+
+const fieldDialoguePlaySFX = document.getElementById("field-dialogue-playsfx");
+const fieldDialoguePlaySFXLink = document.getElementById("field-dialogue-playsfxlink");
+const fieldDialoguePlaySFXLoad = document.getElementById("field-dialogue-playsfxload");
+const fieldDialoguePlaySFXVolume = document.getElementById("field-dialogue-sfxvolval");
+
+const fieldDialoguePlayVO = document.getElementById("field-dialogue-playvo");
+const fieldDialoguePlayVOLink = document.getElementById("field-dialogue-playvolink");
+const fieldDialoguePlayVOLoad = document.getElementById("field-dialogue-playvoload");
+const fieldDialoguePlayVOVolume = document.getElementById("field-dialogue-vovolval");
+
 const fieldDialogueTLDur = document.getElementById("field-dialogue-tldur");
 
 const fieldNarrationContent = document.getElementById("field-dialogue-ncontent");
@@ -1640,6 +1735,44 @@ function updateEditPanel() {
     fieldDialogueFadeInDur.value = entry.fadeInDur;
     fieldDialogueFadeOutDur.value = entry.fadeOutDur;
     fieldDialogueFadeBlackDur.value = entry.fadeBlackDur;
+
+    fieldDialoguePlayBGM.innerHTML = `<option value="???">None</option>`;
+    for (const i of Object.keys(loadedBgm)) {
+        fieldDialoguePlayBGM.innerHTML += `
+        <option value="${i}">${i}</option>
+        `;
+    }
+    fieldDialoguePlayBGM.value = entry.bgm.key ?? "???";
+
+    fieldDialoguePlayBGMVolume.value = entry.bgm.volume;
+    fieldDialoguePlayBGMFade.innerHTML = entry.bgm.fade ? "<i class='bx bx-check'></i>" : "";
+    fieldDialoguePlayBGMFadeDur.value = entry.bgm.fadeDur;
+
+    if (entry.bgm.fade) {
+        fieldDialoguePlayBGMFadeDur.removeAttribute("disabled");
+    } else {
+        fieldDialoguePlayBGMFadeDur.setAttribute("disabled", "");
+    }
+
+    fieldDialoguePlaySFX.innerHTML = `<option value="???">None</option>`;
+    for (const i of Object.keys(loadedSfx)) {
+        fieldDialoguePlaySFX.innerHTML += `
+        <option value="${i}">${i}</option>
+        `;
+    }
+    fieldDialoguePlaySFX.value = entry.sfx.key ?? "???";
+
+    fieldDialoguePlaySFXVolume.value = entry.sfx.volume;
+
+    fieldDialoguePlayVO.innerHTML = `<option value="???">None</option>`;
+    for (const i of Object.keys(loadedVo)) {
+        fieldDialoguePlayVO.innerHTML += `
+        <option value="${i}">${i}</option>
+        `;
+    }
+    fieldDialoguePlayVO.value = entry.vo.key ?? "???";
+
+    fieldDialoguePlayVOVolume.value = entry.vo.volume;
 
     fieldDialogueEaseType.innerHTML = "";
     for (const i of Object.getOwnPropertyNames(Easing)) {
@@ -2170,6 +2303,225 @@ fieldDialogueFadeBlackDur.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialoguePlayBGM.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.bgm.key = fieldDialoguePlayBGM.value === "???" ? null : fieldDialoguePlayBGM.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayBGMLink.addEventListener("click", () => {
+    prompt({
+        title: "Load from URL",
+        label: "Please input a URL to load from:",
+        inputAttrs: {
+            type: 'url',
+            required: true
+        },
+        type: 'input',
+    })
+    .then(r => {
+        if (r !== null) {
+            const entry = curScenario[curDialogue];
+            const audio = r;
+            const filename = path.parse(path.basename(audio)).name;
+
+            loadedBgm[filename] = audio;
+            entry.bgm.key = filename;
+
+            updateDialogueList();
+            selectDialogueEntry(curSelectedEntry);
+        }
+    })
+    .catch(console.error);
+});
+
+fieldDialoguePlayBGMLoad.addEventListener("input", () => {
+    const fileList = fieldDialoguePlayBGMLoad.files;
+
+    if (fileList.length > 0) {
+        for (const i of fileList) {
+            const filer = new FileReader();
+            filer.onload = (e) => {
+                const entry = curScenario[curDialogue];
+                const audio = e.target.result.toString();
+                const filename = path.parse(path.basename(webUtils.getPathForFile(i))).name;
+
+                loadedBgm[filename] = audio;
+                entry.bgm.key = filename;
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            }
+
+            filer.readAsDataURL(i);
+        }
+    }
+});
+
+fieldDialoguePlayBGMVolume.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.bgm.volume = clamp(parseFloat(fieldDialoguePlayBGMVolume.value), 0, 1);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayBGMFade.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.bgm.fade = !entry.bgm.fade;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayBGMFadeDur.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.bgm.fadeDur = parseFloat(fieldDialoguePlayBGMFadeDur.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlaySFX.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.sfx.key = fieldDialoguePlaySFX.value === "???" ? null : fieldDialoguePlaySFX.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlaySFXLink.addEventListener("click", () => {
+    prompt({
+        title: "Load from URL",
+        label: "Please input a URL to load from:",
+        inputAttrs: {
+            type: 'url',
+            required: true
+        },
+        type: 'input',
+    })
+    .then(r => {
+        if (r !== null) {
+            const entry = curScenario[curDialogue];
+            const audio = r;
+            const filename = path.parse(path.basename(audio)).name;
+
+            loadedSfx[filename] = audio;
+            entry.sfx.key = filename;
+
+            updateDialogueList();
+            selectDialogueEntry(curSelectedEntry);
+        }
+    })
+    .catch(console.error);
+});
+
+fieldDialoguePlaySFXLoad.addEventListener("input", () => {
+    const fileList = fieldDialoguePlaySFXLoad.files;
+
+    if (fileList.length > 0) {
+        for (const i of fileList) {
+            const filer = new FileReader();
+            filer.onload = (e) => {
+                const entry = curScenario[curDialogue];
+                const audio = e.target.result.toString();
+                const filename = path.parse(path.basename(webUtils.getPathForFile(i))).name;
+
+                loadedSfx[filename] = audio;
+                entry.sfx.key = filename;
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            }
+
+            filer.readAsDataURL(i);
+        }
+    }
+});
+
+fieldDialoguePlaySFXVolume.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.sfx.volume = clamp(parseFloat(fieldDialoguePlaySFXVolume.value), 0, 1);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayVO.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.vo.key = fieldDialoguePlayVO.value === "???" ? null : fieldDialoguePlayVO.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayVOLink.addEventListener("click", () => {
+    prompt({
+        title: "Load from URL",
+        label: "Please input a URL to load from:",
+        inputAttrs: {
+            type: 'url',
+            required: true
+        },
+        type: 'input',
+    })
+    .then(r => {
+        if (r !== null) {
+            const entry = curScenario[curDialogue];
+            const audio = r;
+            const filename = path.parse(path.basename(audio)).name;
+
+            loadedVo[filename] = audio;
+            entry.vo.key = filename;
+
+            updateDialogueList();
+            selectDialogueEntry(curSelectedEntry);
+        }
+    })
+    .catch(console.error);
+});
+
+fieldDialoguePlayVOLoad.addEventListener("input", () => {
+    const fileList = fieldDialoguePlayVOLoad.files;
+
+    if (fileList.length > 0) {
+        for (const i of fileList) {
+            const filer = new FileReader();
+            filer.onload = (e) => {
+                const entry = curScenario[curDialogue];
+                const audio = e.target.result.toString();
+                const filename = path.parse(path.basename(webUtils.getPathForFile(i))).name;
+
+                loadedVo[filename] = audio;
+                entry.vo.key = filename;
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            }
+
+            filer.readAsDataURL(i);
+        }
+    }
+});
+
+fieldDialoguePlayVOVolume.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.vo.volume = clamp(parseFloat(fieldDialoguePlayVOVolume.value), 0, 1);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueTLDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
 
@@ -2276,6 +2628,16 @@ function updateInspectorPanel() {
         fieldWorldInitBGY.value = bg.initY;
         fieldWorldInitBGS.value = bg.initS;
         fieldWorldInitBGR.value = bg.initR;
+
+        fieldWorldInitBG.innerHTML = "";
+
+        for (const i of Object.keys(loadedBgs)) {
+            fieldWorldInitBG.innerHTML += `
+            <option value="${i}">${i}</option>
+            `;
+        }
+
+        fieldWorldInitBG.value = bg.initLink;
     }
     
     const selectedGroupElement = document.getElementsByClassName("field-group-" + selectedGroupName);
@@ -2390,6 +2752,7 @@ worldOpen.addEventListener("click", () => {
     selectCharacterEntry(null);
 });
 
+const fieldWorldInitBG = document.getElementById("field-world-initbg");
 const fieldWorldInitBGLink = document.getElementById("field-world-initbglink");
 const fieldWorldInitBGLoad = document.getElementById("field-world-initbgload");
 
@@ -2403,13 +2766,56 @@ const fieldWorldInitCamY = document.getElementById("field-world-initcamy");
 const fieldWorldInitCamZ = document.getElementById("field-world-initcamz");
 const fieldWorldInitCamR = document.getElementById("field-world-initcamr");
 
-fieldWorldInitBGLink.addEventListener("input", () => {
-    bg.initLink = fieldWorldInitBGLink.value.trim();
+fieldWorldInitBG.addEventListener("input", () => {
+    bg.initLink = fieldWorldInitBG.value;
     updatePositionsToLatest();
 });
 
+fieldWorldInitBGLink.addEventListener("click", () => {
+    prompt({
+        title: "Load from URL",
+        label: "Please input a URL to load from:",
+        inputAttrs: {
+            type: 'url',
+            required: true
+        },
+        type: 'input',
+    })
+    .then(r => {
+        if (r !== null) {
+            const image = r;
+            const filename = path.parse(path.basename(image)).name;
+
+            loadedBgs[filename] = image;
+            bg.initLink = filename;
+
+            updateInspectorPanel();
+            updatePositionsToLatest();
+        }
+    })
+    .catch(console.error);
+});
+
 fieldWorldInitBGLoad.addEventListener("input", () => {
-    
+    const fileList = fieldWorldInitBGLoad.files;
+
+    if (fileList.length > 0) {
+        for (const i of files) {
+            const filer = new FileReader();
+            filer.onload = (e) => {
+                const image = e.target.result.toString();
+                const filename = path.parse(path.basename(webUtils.getPathForFile(i))).name;
+
+                loadedBgs[filename] = image;
+                bg.initLink = filename;
+
+                updateInspectorPanel();
+                updatePositionsToLatest();
+            }
+
+            filer.readAsDataURL(i);
+        }
+    }
 });
 
 fieldWorldInitBGX.addEventListener("input", () => {
