@@ -73,7 +73,8 @@ var dialogueNarrationBox = document.getElementById("dialogue-element-narrationbo
 var dialogueNarrationText = document.querySelector("div#dialogue-element-narrationbox > span");
 var dialogueChoiceList = document.getElementById("dialogue-container-choices");
 
-var dialogueDarkener = document.getElementById("dialogue-container-darkener");
+var dialogueFader = document.getElementById("layer-fader");
+var dialogueDarkener = document.getElementById("layer-darkener");
 
 var dialogueDecoPointer = document.getElementById("dialogue-deco-pointer");
 var dialogueDecoMesh = document.getElementById("dialogue-deco-mesh");
@@ -93,11 +94,22 @@ var layerCharacter = document.getElementById("layer-character");
 
 const backgroundMain = document.getElementById("background-main");
 
+var skipping = false;
+
 function parseDialogue(noTalk = false) {
-    if (curDialogue > curScenario.length - 1 && curScenario.length > 0) {
+    if ((curDialogue > curScenario.length - 1 && curScenario.length > 0) || skipping) {
         transitionStinger();
 
+        if (curScenarioHidden) {
+            controlHide.onclick();
+        }
+
+        if (curScenarioAuto) {
+            controlAuto.onclick();
+        }
+
         inEditor = true;
+        canProgress = true;
         curDialogue = curSelectedEntry;
         
         setTimeout(() => {
@@ -130,6 +142,7 @@ function parseDialogue(noTalk = false) {
     dialogueDecoPointer.style.opacity = "0";
     dialogueDecoPointer.style.animation = "unset";
 
+    dialogueFader.style.backgroundColor = "rgba(0, 0, 0, 0)";
     dialogueDarkener.style.display = "none";
 
     if (dialogueDecoPointer.classList.contains("narration")) {
@@ -141,6 +154,12 @@ function parseDialogue(noTalk = false) {
     }
 
     curDialogueChoiceElements = [];
+
+    // end all tweens
+    for (const i of tweens) {
+        i.end();
+    }
+    // these three lines shall exclaim "I give up", as the tweening system is so ass
 
     switch (curDialogueState) {
         case "speech":
@@ -206,7 +225,9 @@ function parseDialogue(noTalk = false) {
             dialogueContainerChoice.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
 
-            sfxChoiceEnter.play();
+            if (!inEditor) {
+                sfxChoiceEnter.play();
+            }
 
             curDialogueChoices = [];
 
@@ -272,14 +293,30 @@ function parseDialogue(noTalk = false) {
         tweens.push(tween);
     }
 
-    if (entry.fadeIn) {
+    if (entry.fadeIn && !inEditor) {
         const tween = new Tween({perc: 0})
             .to({
                 perc: 1
             }, (entry.fadeInDur !== null ? entry.fadeInDur : 1) * 1000)
             .easing(Easing.Sinusoidal.InOut)
             .onUpdate((n) => {
-                layerControls.style.backgroundColor = `rgba(0, 0, 0, ${1 - n.perc})`
+                dialogueFader.style.backgroundColor = `rgba(0, 0, 0, ${1 - n.perc})`
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
+    }
+
+    if (entry.fadeToBlack && !inEditor) {
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.fadeBlackDur !== null ? entry.fadeBlackDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                dialogueFader.style.backgroundColor = `rgba(0, 0, 0, ${n.perc})`
             })
             .onComplete(() => {
                 tweens.splice(tweens.indexOf(tween), 1);
@@ -348,6 +385,33 @@ controlHide.onclick = (e) => {
             curScenarioShown = true;
         }, 250);
     }
+}
+
+controlAuto.onclick = () => {
+    if (inEditor) return;
+
+    curScenarioAuto = !curScenarioAuto;
+
+    const buttonAuto = document.getElementById("control-button-auto");
+
+    buttonAuto.classList.remove("active")
+    if (curScenarioAuto) {
+        buttonAuto.classList.add("active")
+    }
+
+    if (autoTimer !== null) {
+        clearTimeout(autoTimer);
+        autoTimer = null;
+    }
+}
+
+controlSkip.onclick = () => {
+    if (inEditor) return;
+
+    skipping = true;
+    parseDialogue(true);
+
+    skipping = false;
 }
 
 function controlCommonPress(parentElement) {
@@ -460,7 +524,7 @@ function updateText() {
 function addChoice(choice = "", jumpTo = null) {
     curDialogueChoices.push({
         text: choice,
-        jumpTo: jumpTo
+        jump: jumpTo
     });
 
     updateChoices();
@@ -635,13 +699,14 @@ function choiceCommonLeave(element) {
 }
 
 function parseChoice(entry) {
-    if (entry.jump ?? false) {
+    curDialogueCurTime = curDialogueMaxTime;
+    curDialoguePlaying = false;
 
-    } else {
-        curDialogueCurTime = curDialogueMaxTime;
-        curDialoguePlaying = false;
-        skipOrProgress();
+    if (entry.jump !== null) {
+        curDialogue = entry.jump - 1;
     }
+
+    skipOrProgress();
 }
 
 /**
@@ -669,8 +734,11 @@ function narrationMeasureText(text) {
 /**
  * wtf does this do
  */
+
+let canProgress = true;
 function skipOrProgress() {
     if (!hasLoaded) return;
+    if (!canProgress) return;
 
     if (curDialogueCurTime < curDialogueMaxTime) {
         if (curDialoguePlaying) {
@@ -698,14 +766,14 @@ function skipOrProgress() {
     } else {
         const entry = curScenario[curDialogue];
 
-        if (entry.fadeOut) {
+        if (curScenario[curDialogue] && entry.fadeOut && !inEditor) {
             const tween = new Tween({perc: 0})
                 .to({
                     perc: 1
                 }, (entry.fadeOutDur !== null ? entry.fadeOutDur : 1) * 1000)
                 .easing(Easing.Sinusoidal.InOut)
                 .onUpdate((n) => {
-                    layerControls.style.backgroundColor = `rgba(0, 0, 0, ${n.perc})`
+                    dialogueFader.style.backgroundColor = `rgba(0, 0, 0, ${n.perc})`
                 })
                 .onComplete(() => {
                     tweens.splice(tweens.indexOf(tween), 1);
@@ -721,6 +789,8 @@ function skipOrProgress() {
         }
     }
 }
+
+let autoTimer = null;
 
 /**
  * Main update loop function
@@ -762,6 +832,26 @@ function dialogueLoop(elapsed) {
                     characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(1, 'talk_end', false);
                     characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(1, 4 / 60);
                     characters[curScenario[curDialogue].speakerModel].talking = false;
+                }
+            }
+        }
+    }
+
+    if (curScenario.length > 0 && !inEditor && curScenarioAuto) {
+        if (curScenario[curDialogue].type !== "Choice") {
+            // these all have to be true to be considered "done"
+            const conditionsToBeDone = [
+                curDialogueCurTime >= curDialogueMaxTime,
+                tweens.length === 0,
+                // todo: audio file playing
+            ];
+        
+            if (!conditionsToBeDone.includes(false)) {
+                if (autoTimer === null) {
+                    autoTimer = setTimeout(() => {
+                        skipOrProgress();
+                        autoTimer = null;
+                    }, 1500);
                 }
             }
         }
@@ -903,14 +993,21 @@ let entryClipboard = "";
 
 window.addEventListener("keydown", (e) => {
     if (inEditor) return;
-    if (!curScenarioShown) return;
-    if (curDialogueChoiceElements.length > 0) return;
 
-    if (e.key === " ") {
-        skipOrProgress();
-    }
     if (e.key.toLowerCase() === "h") {
         controlHide.onclick();
+    }
+    if (e.shiftKey) {
+        controlAuto.onclick();
+    }
+    if (e.key.toLowerCase() === "]") {
+        controlSkip.onclick();
+    }
+
+    if (curDialogueChoiceElements.length > 0) return;
+
+    if (e.key === " " && !curScenarioAuto) {
+        skipOrProgress();
     }
 });
 
@@ -959,10 +1056,11 @@ window.addEventListener("keyup", (e) => {
     }
 });
 
-let shakeTimeout = null
+let shakeTimeout = null;
 
 window.addEventListener("click", (e) => {
     if (inEditor) return;
+    if (curScenarioAuto) return;
     if (!curScenarioShown) return;
     if (curDialogueChoiceElements.length > 0) {
         if (curDialogueChoiceElements.filter(el => mouseOverElement(el, e)).length === 0) {
@@ -980,6 +1078,10 @@ window.addEventListener("click", (e) => {
         }
         return;
     }
+    if ([controlHide, controlAuto, controlLog, controlSkip].filter(el => mouseOverElement(el, e)).length > 0) {
+        return;
+    }
+
     skipOrProgress();
 });
 
@@ -1078,6 +1180,11 @@ function updateDialogueList() {
         curEntries.push(div);
 
         div.onclick = () => {
+            if (choosingJump) {
+                selectJumpForChoice(curEntries.indexOf(div));
+                return;
+            }
+
             selectDialogueEntry(curEntries.indexOf(div));
         }
     }
@@ -1152,8 +1259,10 @@ dialogueAdd.addEventListener("click", () => {
 
         fadeIn: false,
         fadeOut: false,
+        fadeToBlack: false,
         fadeInDur: 1,
         fadeOutDur: 1,
+        fadeBlackDur: 1,
 
     	content: "",
     	keyframes: [],
@@ -1461,8 +1570,10 @@ const fieldDialogueEaseDir = document.getElementById("field-dialogue-foceasedir"
 
 const fieldDialogueFadeIn = document.getElementById("field-dialogue-fadein");
 const fieldDialogueFadeOut = document.getElementById("field-dialogue-fadeout");
+const fieldDialogueFadeBlack = document.getElementById("field-dialogue-fadeblack");
 const fieldDialogueFadeInDur = document.getElementById("field-dialogue-fadeindur");
 const fieldDialogueFadeOutDur = document.getElementById("field-dialogue-fadeoutdur");
+const fieldDialogueFadeBlackDur = document.getElementById("field-dialogue-fadeblackdur");
 
 const fieldDialogueTLDur = document.getElementById("field-dialogue-tldur");
 
@@ -1525,8 +1636,10 @@ function updateEditPanel() {
 
     fieldDialogueFadeIn.innerHTML = entry.fadeIn ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFadeOut.innerHTML = entry.fadeOut ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFadeBlack.innerHTML = entry.fadeToBlack ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFadeInDur.value = entry.fadeInDur;
     fieldDialogueFadeOutDur.value = entry.fadeOutDur;
+    fieldDialogueFadeBlackDur.value = entry.fadeBlackDur;
 
     fieldDialogueEaseType.innerHTML = "";
     for (const i of Object.getOwnPropertyNames(Easing)) {
@@ -1572,6 +1685,12 @@ function updateEditPanel() {
         fieldDialogueFadeOutDur.removeAttribute("disabled");
     } else {
         fieldDialogueFadeOutDur.setAttribute("disabled", "");
+    }
+
+    if (entry.fadeToBlack) {
+        fieldDialogueFadeBlackDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueFadeBlackDur.setAttribute("disabled", "");
     }
 
     const num = Math.max(entry.keyframeDuration, calcLength(entry.content));
@@ -1638,6 +1757,46 @@ function updateEditPanel() {
                     selectDialogueEntry(curSelectedEntry);
                 }
 
+                const tray = document.createElement("div");
+                tray.classList.add("button-tray");
+
+                const changeJump = document.createElement("div");
+                changeJump.classList.add("button");
+                changeJump.classList.add("white");
+                changeJump.innerHTML = `<i class="bx bxs-edit-location"></i>`;
+                changeJump.title = "Change the index the choice will jump to, akin to an eyedropper."
+                tray.appendChild(changeJump)
+
+                const jumpLocation = document.createElement("input");
+                jumpLocation.setAttribute("type", "number");
+                jumpLocation.style.width = "64px";
+                jumpLocation.title = "This is the index the choice will make the scenario jump to."
+                tray.appendChild(jumpLocation);
+
+                jumpLocation.value = entry.choices[immut].jump;
+
+                const trash = document.createElement("div");
+                trash.classList.add("button");
+                trash.classList.add("red");
+                trash.innerHTML = `<i class="bx bx-trash"></i>`;
+                tray.appendChild(trash)
+
+                changeJump.onclick = () => {
+                    choosingJump = true;
+                    choiceEditing = immut;
+                }
+
+                trash.onclick = () => {
+                    const entry = curScenario[curDialogue];
+
+                    entry.choices.splice(immut, 1);
+
+                    updateDialogueList();
+                    selectDialogueEntry(curSelectedEntry);
+                }
+
+                div.appendChild(tray);
+
                 fieldChoiceList.appendChild(div);
             }
         case "Narration":
@@ -1647,6 +1806,23 @@ function updateEditPanel() {
             fieldMonologueContent.value = entry.content;
             break;
     }
+}
+
+let choosingJump = false;
+let choiceEditing = null;
+
+function selectJumpForChoice(jumpIndex) {
+    if (choiceEditing === null) return;
+
+    const entry = curScenario[curDialogue];
+
+    entry.choices[choiceEditing].jump = jumpIndex;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+
+    choosingJump = false;
+    choiceEditing = null;
 }
 
 let isColorDefOpen = false;
@@ -1958,6 +2134,15 @@ fieldDialogueFadeOut.addEventListener("click", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueFadeBlack.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeToBlack = !entry.fadeToBlack;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialogueFadeInDur.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
@@ -1971,6 +2156,15 @@ fieldDialogueFadeOutDur.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
     entry.fadeOutDur = fieldDialogueFadeOutDur.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueFadeBlackDur.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.fadeBlackDur = fieldDialogueFadeBlackDur.value;
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);

@@ -58,7 +58,7 @@ div#layer-gradient {
     z-index: 5;
 }
 
-div#layer-background > img {
+div#layer-background>img {
     position: absolute;
 
     left: 50%;
@@ -157,9 +157,13 @@ img#dialogue-deco-pointer.narration {
 }
 
 @keyframes pointer {
-    0%, 37.5%, 100% {
+
+    0%,
+    37.5%,
+    100% {
         transform: translateY(-3px);
     }
+
     18.75% {
         transform: translateY(0px);
     }
@@ -204,8 +208,8 @@ div#layer-controls {
 div#layer-controls>div {
     position: absolute;
     transition: opacity 0.05s linear,
-                filter 0.05s linear,
-                scale 0.05s linear;
+        filter 0.05s linear,
+        scale 0.05s linear;
     pointer-events: all;
 }
 
@@ -368,7 +372,7 @@ div.choice-glow {
     border-image-width: 8px 8px 8px 8px;
     border-image-repeat: stretch stretch;
 
-    background-color: #00c7ff;
+    background-color: #00bbff;
     mix-blend-mode: screen;
 }
 
@@ -502,6 +506,7 @@ div.touch-fx {
         background-position-x: 0px;
         display: none;
     }
+
     100% {
         background-position-x: 1360px;
     }
@@ -550,8 +555,8 @@ div.stinger-box {
     scale: 1.02;
 
     transition: opacity 0.05s cubic-bezier(0.37, 0, 0.63, 1),
-                background-color 0.1s cubic-bezier(0.37, 0, 0.63, 1),
-                transform 0.05s cubic-bezier(0.37, 0, 0.63, 1);
+        background-color 0.1s cubic-bezier(0.37, 0, 0.63, 1),
+        transform 0.05s cubic-bezier(0.37, 0, 0.63, 1);
 }
 
 div.stinger-icon {
@@ -568,20 +573,111 @@ div.stinger-icon {
 }
 
 @keyframes stinger-icon-animation {
-    from {background-position: 0px;}
-    to {background-position: 7680px;}
+    from {
+        background-position: 0px;
+    }
+
+    to {
+        background-position: 7680px;
+    }
 }
 
 @keyframes choice-shake {
-    0% { transform: translate(1px, 1px); }
-    10% { transform: translate(-1px, -2px); }
-    20% { transform: translate(-3px, 0px); }
-    30% { transform: translate(3px, 2px); }
-    40% { transform: translate(1px, -1px); }
-    50% { transform: translate(-1px, 2px); }
-    60% { transform: translate(-3px, 1px); }
-    70% { transform: translate(3px, 1px); }
-    80% { transform: translate(-1px, -1px); }
-    90% { transform: translate(1px, 2px); }
-    100% { transform: translate(1px, -2px); }
-  }
+    0% {
+        transform: translate(1px, 1px);
+    }
+
+    10% {
+        transform: translate(-1px, -2px);
+    }
+
+    20% {
+        transform: translate(-3px, 0px);
+    }
+
+    30% {
+        transform: translate(3px, 2px);
+    }
+
+    40% {
+        transform: translate(1px, -1px);
+    }
+
+    50% {
+        transform: translate(-1px, 2px);
+    }
+
+    60% {
+        transform: translate(-3px, 1px);
+    }
+
+    70% {
+        transform: translate(3px, 1px);
+    }
+
+    80% {
+        transform: translate(-1px, -1px);
+    }
+
+    90% {
+        transform: translate(1px, 2px);
+    }
+
+    100% {
+        transform: translate(1px, -2px);
+    }
+}
+
+div#control-button-auto.active > span {
+    color: #00bbff;
+}
+
+div#control-button-auto.active > img {
+    animation: auto-rotate 2s infinite cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    filter: brightness(0) saturate(100%) invert(49%) sepia(55%) saturate(2044%) hue-rotate(165deg) brightness(105%) contrast(105%);
+}
+
+
+div#control-button-auto.active > div.button-hitbox > div.keybind-display {
+    border-color: #00bbff;
+    color: #00bbff;
+}
+
+@keyframes auto-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    10% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+div#layer-darkener {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none;
+}
+
+div#layer-fader {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.0);
+}

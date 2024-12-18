@@ -31,14 +31,18 @@
             </div>
             <div class="overlay-sides"></div>
         </div>
+
+        <div id="layer-fader"></div>
+        <div id="layer-darkener"></div>
+
         <div id="layer-dialogue">
+
             <div id="dialogue-container-speech" style="opacity: 0;">
                 <div id="dialogue-deco-color-bar"></div>
                 <div id="dialogue-text-speaker"></div>
                 <div id="dialogue-text-content"></div>
             </div>
 
-            <div id="dialogue-container-darkener"></div>
             <div id="dialogue-container-choices" style="opacity: 0;" class="list choices"></div>
 
             <div id="dialogue-container-narration" style="opacity: 0;">
@@ -257,6 +261,7 @@
                     <div class="field-group-choice stretchy">
                         <div class="generic-button white fullwidth" id="field-choice-add">Add new choice</div>
                         <div class="generic-list alternating" id="field-choice-list"></div>
+                        <span>Hovering over a choice will highlight where it'll jump.</span>
                     </div>
 
                     <div class="field-group-narration">
@@ -331,6 +336,13 @@
                             <div class="button white" id="field-dialogue-fadeout"></div>
                         </div>
                         <input type="number" id="field-dialogue-fadeoutdur" step="0.1">
+                    </div>
+                    <div class="field-group-all field-double stretchy" title="Fade out at the start of the entry.">
+                        <div>
+                            <b>Fade To Black</b>
+                            <div class="button white" id="field-dialogue-fadeblack"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-fadeblackdur" step="0.1">
                     </div>
 
                     <hr class="field-group-all">

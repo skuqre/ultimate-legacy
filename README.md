@@ -1,12 +1,10 @@
-<p style="text-align: center; display: block;">
+<p align="center">
 <img src="./assets/icons/png/128x128.png" />
 </p>
 
-<p style="text-align: center;">
-<h1>
+<h1 align="center">
 Ultimate Scenario Creator
 </h1>
-</p>
 
 *"How accurate is too accurate?"*
 

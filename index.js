@@ -58,6 +58,7 @@ const createWindow = () => {
 
     globalShortcut.register('CommandOrControl+Alt+R', () => {
         mainWindow.reload();
+        mainWindow.emit("resize");
     });
     globalShortcut.register('CommandOrControl+Alt+Shift+I', () => {
         mainWindow.webContents.openDevTools();
