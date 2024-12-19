@@ -506,7 +506,7 @@ div.field-double {
     flex-direction: row !important;
     align-items: center;
     justify-content: stretch;
-    gap: 16px !important;
+    gap: 8px !important;
 
     width: 100%;
 }

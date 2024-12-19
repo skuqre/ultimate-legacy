@@ -245,6 +245,15 @@ div.button-hitbox>div.keybind-display {
     transform: translateX(-50%);
 }
 
+div.choice>div.keybind-display {
+    position: absolute;
+
+    left: 0;
+    top: 50%;
+    transform: translate(-35%, -50%);
+    line-height: normal;
+}
+
 div.keybind-display {
     border-radius: 8px;
     border: #bcbcbc 2px solid;
@@ -309,9 +318,9 @@ div.choice {
     /* font-kerning: none; */
     text-align: center;
 
-    padding: 14px 17px;
+    padding: 14px 24px;
     /* margin: 16px; */
-    width: 468px;
+    width: 454px;
     min-height: 43px;
 
     letter-spacing: 0.3px;
@@ -344,7 +353,7 @@ div.choice.oneline>span {
 }
 
 div.choice.oneline {
-    padding: 8px 17px;
+    padding: 8px 24px;
 }
 
 div.choice-deco {

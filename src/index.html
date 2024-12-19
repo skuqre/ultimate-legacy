@@ -231,6 +231,17 @@
             <div id="dialogue-edit-main">
                 <div class="generic-header">
                     <span>Edit</span>
+                    <div class="button-tray">
+                        <div class="button white" id="bgm-toggle" style="color: var(--accent);" title="Toggle BGM playback.">
+                            <i class='bx bxs-music'></i>
+                        </div>
+                        <div class="button white" id="sfx-toggle" style="color: var(--accent);" title="Toggle SFX playback.">
+                            <i class='bx bxs-volume-full'></i>
+                        </div>
+                        <div class="button white" id="vo-toggle" style="color: var(--accent);" title="Toggle VO playback.">
+                            <i class='bx bxs-user-voice'></i>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="generic-panel" id="editor-edit-list" style="display: none;">
@@ -427,8 +438,30 @@
                     <hr class="field-group-all">
 
                     <div class="field-group-all field-double stretchy">
-                        <b>Timeline Duration</b>
+                        <div>
+                            <b>Timeline Duration</b>
+                            <div class="button white" id="field-dialogue-tldurlock" title="When this is locked, the value on the right is always the duration of the typing animation. Keep locked if you want consistent times. Unlock to allow for more advanced stuff like keyframes."></div>
+                        </div>
                         <input type="number" id="field-dialogue-tldur" step="0.1" value="0" min="0">
+                    </div>
+
+                    <div class="field-group-all field-double stretchy" title="The index to jump (skip) to after this dialogue is finished. This is for making dialogue trees.">
+                        <div>
+                            <b>Jump</b>
+                            <div class="button-tray">
+                                <div class="button white" id="field-dialogue-entryjumpeyedropper" title="Change the index the choice will jump (skip) to, akin to an eyedropper.">
+                                    <i class="bx bxs-edit-location"></i>
+                                </div>
+                                <div class="button red" id="field-dialogue-entryjumpremove" title="Remove the index">
+                                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                                        <g>
+                                            <path fill="currentColor" id="svg_1" d="m12,22s8.029,-5.56 8,-12c0,-4.411 -3.589,-8 -8,-8s-8,3.589 -8,7.995c-0.029,6.445 7.696,11.789 8,12.005zm-1,-13l2,0l3,0l0,2l-8,0l0,-2"/>
+                                        </g>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="number" id="field-dialogue-entryjumpindex" step="1" min="0">
                     </div>
                 </div>
                 <div class="generic-panel" id="editor-edit-inst">

@@ -171,3 +171,11 @@ function transitionStinger(manual = false) {
 
     document.body.appendChild(main);
 }
+
+const removeJumpSymbol = `
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <path fill="currentColor" id="svg_1" d="m12,22s8.029,-5.56 8,-12c0,-4.411 -3.589,-8 -8,-8s-8,3.589 -8,7.995c-0.029,6.445 7.696,11.789 8,12.005zm-1,-13l2,0l3,0l0,2l-8,0l0,-2"/>
+    </g>
+</svg>
+`
