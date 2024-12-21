@@ -52,6 +52,11 @@
             <div id="dialogue-container-misc">
                 <img src="../assets/images/pointer.png" alt="Dialogue pointer. Why are you seeing this?" id="dialogue-deco-pointer" style="opacity: 0;" />
             </div>
+
+            <div id="info">
+                v2024.12.XX<br>
+                NOT in-game content.
+            </div>
         </div>
         <div id="layer-controls">
             <div id="control-button-skip" style="left: 1831px; top: 10px;">
@@ -109,6 +114,13 @@
                 <div class="generic-header">
                     <span>Inspector</span>
                     <div class="button-tray">
+                        <div class="button white">
+                            <i class='bx bx-import'></i>
+                            <input type="file" accept=".scn" id="world-import">
+                        </div>
+                        <div class="button white" id="world-export">
+                            <i class='bx bxs-save'></i>
+                        </div>
                         <div class="button white" id="world-open">
                             <i class="bx bx-world"></i>
                         </div>
@@ -134,7 +146,7 @@
                         <hr>
                     </div>
                     <div class="field-group-character">
-                        <b>Initial Emotion</b>
+                        <b>Initial Expression</b>
                         <select id="field-character-initanim">
                             <option value="null">Automatic</option>
                         </select>
@@ -160,6 +172,13 @@
                         <input type="number" id="field-character-inito" step="0.1" min="0" max="1">
                     </div>
 
+                    <div class="field-group-world">
+                        <b>Scenario Name</b>
+                        <input type="text" id="field-world-scnname">
+                    </div>
+                    <div class="field-group-world">
+                        <hr>
+                    </div>
                     <div class="field-group-world field-double stretchy">
                         <b>Initial Camera X</b>
                         <input type="number" id="field-world-initcamx" step="10">
@@ -263,9 +282,24 @@
                         </select>
                     </div>
                     <div class="field-group-speech">
-                        <b>Emotion</b>
+                        <b>Expression</b>
                         <select id="field-dialogue-emotion"></select>
-                        <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match initial emotion</div>
+                        <div class="generic-button white fullwidth" id="field-dialogue-matchinit">Match initial expression</div>
+                    </div>
+                    <div class="field-group-speech">
+                        <b>Play Animation</b>
+                        <select id="field-dialogue-playanim"></select>
+                        <div class="generic-button white fullwidth" id="field-dialogue-removeanim">Remove animation</div>
+                    </div>
+                    <div class="field-group-speech field-double stretchy" style="gap: 16px !important;">
+                        <div>
+                            <b>Loop Animation</b>
+                            <div class="button white" id="field-dialogue-loopanim"></div>
+                        </div>
+                        <div>
+                            <b>Mix Duration</b>
+                            <input type="number" id="field-dialogue-mixanim" step="0.1" style="width: 72px;">
+                        </div>
                     </div>
                     <hr class="field-group-speech">
                     <div class="field-group-speech">
@@ -362,6 +396,32 @@
                             <div class="button white" id="field-dialogue-fadeblack"></div>
                         </div>
                         <input type="number" id="field-dialogue-fadeblackdur" step="0.1">
+                    </div>
+
+                    <hr class="field-group-all">
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Stop BGM</b>
+                            <div class="button white" id="field-dialogue-stopbgm"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-stopbgmdur" step="0.1">
+                    </div>
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Stop SFX</b>
+                            <div class="button white" id="field-dialogue-stopsfx"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-stopsfxdur" step="0.1">
+                    </div>
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Stop VO</b>
+                            <div class="button white" id="field-dialogue-stopvo"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-stopvodur" step="0.1">
                     </div>
 
                     <hr class="field-group-all">

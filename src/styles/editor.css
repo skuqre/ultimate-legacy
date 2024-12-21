@@ -87,6 +87,7 @@ div.button-tray {
 }
 
 div.button {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -225,7 +226,8 @@ input.time-input {
     text-align: center;
 }
 
-div.generic-button > input[type="file"] {
+div.generic-button > input[type="file"],
+div.button > input[type="file"] {
     position: absolute;
     top: 0;
     left: 0;

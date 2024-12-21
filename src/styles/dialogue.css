@@ -250,7 +250,7 @@ div.choice>div.keybind-display {
 
     left: 0;
     top: 50%;
-    transform: translate(-35%, -50%);
+    transform: translate(-45%, -50%);
     line-height: normal;
 }
 
@@ -334,7 +334,11 @@ div.choice {
     pointer-events: all;
 
     /* BOND COLOR */
-    /* color: rgba(238.16038650000002, 117.9567882, 117.9567882, 1.0); */
+}
+
+div.choice.bond {
+    outline: 4px solid #ff4631;
+    outline-offset: -4px;
 }
 
 /* div.choice:hover {
@@ -689,4 +693,14 @@ div#layer-fader {
     height: 100%;
 
     background-color: rgba(0, 0, 0, 0.0);
+}
+
+div#info {
+    position: absolute;
+    bottom: 0;
+    left: 100px;
+    color: white;
+    font-family: 'Pretendard-Bold';
+    opacity: 0.3;
+    text-shadow: #000 0 0 4px;
 }

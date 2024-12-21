@@ -1,4 +1,5 @@
-const { app, BrowserWindow, globalShortcut } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, dialog } = require('electron');
+const fs = require("fs");
 
 // disable lcd antialiasing, it stinks
 app.commandLine.appendSwitch("--disable-lcd-text");
@@ -15,7 +16,8 @@ const createWindow = () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            zoomFactor: 1
+            zoomFactor: 1,
+            // devTools: false
         },
         fullscreenable: true,
         // fullscreen: true
@@ -32,7 +34,7 @@ const createWindow = () => {
     mainWindow.on("resize", (e) => {
         mainWindow.webContents.setZoomFactor(1);
         if (mainWindow.isMinimized()) return;
-        
+
         let newSize = mainWindow.getContentSize();
         let newW = newSize[0];
         let newH = newSize[1];
@@ -54,7 +56,7 @@ const createWindow = () => {
     mainWindow.setMenu(null);
     mainWindow.setContentSize(1280, 720, true);
     mainWindow.center();
-    
+
     mainWindow.webContents.once("did-finish-load", () => {
         mainWindow.emit("resize");
     });
@@ -62,16 +64,53 @@ const createWindow = () => {
     globalShortcut.register('CommandOrControl+Alt+R', () => {
         mainWindow.reload();
         mainWindow.emit("resize");
-    });
-    globalShortcut.register('CommandOrControl+Alt+Shift+I', () => {
-        mainWindow.webContents.openDevTools();
-    });
-    globalShortcut.register('CommandOrControl+Alt+Enter', () => {
-        mainWindow.setFullScreen(!mainWindow.fullScreen);
+        curLoadedFilePath = null;
     });
 }
 
+let curLoadedFilePath = null;
+let savingAs = false;
+
 app.whenReady().then(() => {
+    ipcMain.on('save-file', (event, scn) => {
+        var newFilePath = curLoadedFilePath;
+        if (curLoadedFilePath === null || savingAs) {
+            newFilePath = dialog.showSaveDialogSync({
+                filters: [
+                    { name: "Scenario File", extensions: ["scn"] }
+                ],
+                properties: ["dontAddToRecent"],
+            });
+
+            savingAs = false;
+        }
+
+        if (newFilePath === undefined) {
+            console.log("File saving cancelled");
+            return;
+        }
+
+        curLoadedFilePath = newFilePath;
+
+        fs.writeFileSync(curLoadedFilePath, JSON.stringify(scn, null, "\t"));
+
+        mainWindow.webContents.send("popUpError", "File saved.");
+
+        console.log("File saved to", curLoadedFilePath);
+    });
+
+    ipcMain.on('save-as-file', (event, scn) => {
+        savingAs = true;
+
+        console.log("File path reset to null because of Save As.");
+    });
+
+    ipcMain.on('load-file', (event, path) => {
+        curLoadedFilePath = path;
+
+        console.log("File at", curLoadedFilePath, "loaded");
+    });
+
     createWindow();
 
     app.on('activate', () => {

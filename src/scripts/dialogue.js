@@ -3,7 +3,7 @@ This script handles dialogue playback and editor logic.
 */
 
 const { Tween, Easing } = require("@tweenjs/tween.js");
-const { webUtils } = require('electron');
+const { webUtils, ipcRenderer } = require('electron');
 const path = require("node:path");
 const prompt = require("electron-prompt");
 const fuzzysort = require("fuzzysort");
@@ -34,7 +34,11 @@ var curVoPlaying = new Audio();
 var canBgmPlay = true;
 var canSfxPlay = true;
 var canVoPlay = true;
+var curBgmKey = null;
+var curSfxKey = null;
+var curVoKey = null;
 
+var scnName = "New False Memory";
 var camera = {
     initX: 1920 * 0.5,
     initY: 1080 * 0.5,
@@ -132,6 +136,9 @@ function parseDialogue(noTalk = false) {
         canProgress = true;
         curDialogue = curSelectedEntry;
 
+        curBgmKey = null;
+        curSfxKey = null;
+        curVoKey = null;
         curBgmPlaying.pause();
         curSfxPlaying.pause();
         curVoPlaying.pause();
@@ -235,12 +242,20 @@ function parseDialogue(noTalk = false) {
                 */
 
                 if (!noTalk) {
-                    if (characterModel.emotion !== entry.speakerModelEmotion && entry.speakerModelEmotion !== null) {
+                    if (characterModel.emotion !== entry.speakerModelEmotion && entry.speakerModelEmotion) {
                         characterModel.player.playAnimationWithTrack(0, entry.speakerModelEmotion, true);
                         characterModel.emotion = entry.speakerModelEmotion;
                     }
 
-                    characterModel.player.playAnimationWithTrack(1, "talk_start", true);
+                    if (entry.speakerModelPlayAnim) {
+                        characterModel.player.playAnimationWithTrack(1, entry.speakerModelPlayAnim, true);
+
+                        if (!(entry.speakerModelLoopAnim ?? false)) {
+                            characterModel.player.queueNextEmpty(1, 4/60);
+                        }
+                    }
+
+                    characterModel.player.playAnimationWithTrack(2, "talk_start", true);
                     characterModel.talking = true;
                 }
             }
@@ -261,7 +276,7 @@ function parseDialogue(noTalk = false) {
 
             for (let i = 0; i < entry.choices.length; i++) {
                 const choice = entry.choices[i];
-                addChoice(choice.text, choice.jump);
+                addChoice(choice.text, choice.style, choice.jump);
             }
 
             setTimeout(() => {
@@ -353,7 +368,8 @@ function parseDialogue(noTalk = false) {
         tweens.push(tween);
     }
 
-    if (entry.bgm.key !== null && (!inEditor || canBgmPlay)) {
+    if (entry.bgm.key !== null && (!inEditor || canBgmPlay) && curBgmKey !== entry.bgm.key) {
+        curBgmKey = entry.bgm.key;
         curBgmPlaying.pause();
 
         curBgmPlaying.src = loadedBgm[entry.bgm.key];
@@ -380,7 +396,8 @@ function parseDialogue(noTalk = false) {
         }
     }
 
-    if (entry.sfx.key !== null && (!inEditor || canSfxPlay)) {
+    if (entry.sfx.key !== null && (!inEditor || canSfxPlay) && curSfxKey !== entry.sfx.key) {
+        curSfxKey = entry.sfx.key;
         curSfxPlaying.pause();
 
         curSfxPlaying.src = loadedSfx[entry.sfx.key];
@@ -390,7 +407,8 @@ function parseDialogue(noTalk = false) {
         curSfxPlaying.play();
     }
 
-    if (entry.vo.key !== null && (!inEditor || canVoPlay)) {
+    if (entry.vo.key !== null && (!inEditor || canVoPlay) && curVoKey !== entry.vo.key) {
+        curVoKey = entry.vo.key;
         curVoPlaying.pause();
 
         curVoPlaying.src = loadedVo[entry.vo.key];
@@ -398,6 +416,58 @@ function parseDialogue(noTalk = false) {
         curVoPlaying.volume = entry.vo.volume;
         curVoPlaying.load();
         curVoPlaying.play();
+    }
+
+    if (entry.stopBgm) {
+        const volCapture = curBgmPlaying.volume;
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.stopBgmDur !== null ? entry.stopBgmDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                console.log(1 - n.perc)
+                curBgmPlaying.volume = (1 - n.perc) * volCapture;
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
+    }
+
+    if (entry.stopSfx) {
+        const volCapture = curSfxPlaying.volume;
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.stopSfxDur !== null ? entry.stopSfxDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                curSfxPlaying.volume = (1 - n.perc) * volCapture;
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
+    }
+
+    if (entry.stopVo) {
+        const volCapture = curVoPlaying.volume;
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.stopVoDur !== null ? entry.stopVoDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                curVoPlaying.volume = (1 - n.perc) * volCapture;
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
     }
 
     if (!(!entry.keyframeDuration || entry.keyframeDuration <= 0)) {
@@ -574,7 +644,7 @@ function setText(text) {
 let prev = 0;
 
 function updateText() {
-    const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4 / 60)), 0, curDialogueContent.length);
+    const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4/60)), 0, curDialogueContent.length);
 
     if (prev !== lettersToDisplay && !["narration", "monologue", "choice"].includes(curDialogueState)) {
         sfxType.play();
@@ -596,9 +666,10 @@ function updateText() {
  * @param { String } choice 
  * @param { Int } jumpTo 
  */
-function addChoice(choice = "", jumpTo = null) {
+function addChoice(choice = "", style = null, jumpTo = null) {
     curDialogueChoices.push({
         text: choice,
+        style: style,
         jump: jumpTo
     });
 
@@ -623,6 +694,9 @@ function updateChoices() {
         main.style.pointerEvents = "none";
         if (isOneline) {
             main.classList.add("oneline");
+        }
+        if (choice.style !== null) {
+            main.classList.add(choice.style);
         }
 
         const keybind = document.createElement("div");
@@ -695,6 +769,8 @@ function updateChoices() {
 
         main.onmouseup = (e) => {
             choiceCommonRelease(span.parentElement);
+
+            main.setAttribute("active", true);
 
             sfxChoiceSelect.play();
 
@@ -805,7 +881,7 @@ function parseChoice(entry) {
 function choiceMeasureText(text) {
     ctx.font = "21px Pretendard-SemiBold";
     ctx.letterSpacing = "0.3px";
-    return getLinesForParagraphs(ctx, text, 454 - 48);
+    return getLinesForParagraphs(ctx, text, 454);
 }
 
 function contentMeasureText(text) {
@@ -836,9 +912,9 @@ function skipOrProgress() {
             // stop all talking models
             for (const i of Object.keys(characters)) {
                 if (!characters[i].talking) continue;
-                characters[i].player.playAnimationWithTrack(1, 'talk_end', false);
-                characters[i].player.queueNextEmpty(1, 4 / 60);
-                characters[i].player.animationState.setEmptyAnimation(1, 4/60);
+                characters[i].player.playAnimationWithTrack(2, "talk_end", false);
+                characters[i].player.queueNextEmpty(2, 4/60);
+                characters[i].player.animationState.setEmptyAnimation(2, 4/60);
                 characters[i].talking = false;
             }
 
@@ -936,8 +1012,8 @@ function dialogueLoop(elapsed) {
                     if (!(curScenario[curDialogue].speakerModel in characters)) return;
                     if (!characters[curScenario[curDialogue].speakerModel].talking) return;
 
-                    characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(1, 'talk_end', false);
-                    characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(1, 4 / 60);
+                    characters[curScenario[curDialogue].speakerModel].player.playAnimationWithTrack(2, "talk_end", false);
+                    characters[curScenario[curDialogue].speakerModel].player.queueNextEmpty(2, 4/60);
                     characters[curScenario[curDialogue].speakerModel].talking = false;
                 }
             }
@@ -960,6 +1036,20 @@ function dialogueLoop(elapsed) {
                         autoTimer = null;
                     }, 1500);
                 }
+            }
+        } else {
+            if (curDialogueChoiceElements.length === 1) {
+                if (autoTimer === null && curDialogueChoiceElements[0].getAttribute("active") === null) {
+                    autoTimer = setTimeout(() => {
+                        curDialogueChoiceElements[0].onmousedown();
+                        setTimeout(() => {
+                            curDialogueChoiceElements[0].onmouseup();
+                            autoTimer = null;
+                        }, 100)
+                    }, 1500);
+                }
+            } else {
+                autoTimer = null;
             }
         }
     }
@@ -996,6 +1086,8 @@ function cameraLoop(elapsed) {
 
 const loadingScreen = document.getElementById("loading-screen");
 const loadingText = document.getElementById("loading-text");
+
+let fromImport = false;
 
 /**
  * Init
@@ -1035,12 +1127,17 @@ function init() {
                 selectCharacterEntry(null);
             }
 
-            initPositions();
+            // initPositions();
 
             hasLoaded = true;
             loadingScreen.style.display = "none";
 
             clearInterval(loadInterval);
+
+            if (fromImport) {
+                popUpError("File loaded!");
+                fromImport = false;
+            }
         }
     }, 1)
 }
@@ -1078,6 +1175,8 @@ function initPositions() {
             characters[i.id].player.playAnimationWithTrack(0, initAnim, true);
             characters[i.id].emotion = initAnim;
         }
+
+        characters[i.id].player.animationState.setEmptyAnimation(1, 4/60);
     }
 }
 
@@ -1168,6 +1267,7 @@ window.addEventListener("keyup", (e) => {
                         required: true
                     },
                     type: 'input',
+                    skipTaskbar: false
                 })
                 .then(r => {
                     if (r !== null) {
@@ -1189,12 +1289,11 @@ window.addEventListener("keyup", (e) => {
                                 entry.choices = [
                                     {
                                         text: i.text,
+                                        style: null,
                                         jump: null
                                     }
                                 ];
                             }
-
-                            console.log(entry)
                         }
             
                         updateDialogueList();
@@ -1202,6 +1301,18 @@ window.addEventListener("keyup", (e) => {
                     }
                 })
                 .catch(console.error);
+                break;
+            }
+            case "o": {
+                worldImport.click();
+                break;
+            }
+            case "s": {
+                if (e.shiftKey) {
+                    ipcRenderer.send("save-as-file");
+                }
+
+                worldExport.dispatchEvent(new Event("click"));
                 break;
             }
         }
@@ -1236,6 +1347,21 @@ window.addEventListener("keyup", (e) => {
         const index = choiceKeybinds.indexOf(key);
         curDialogueChoiceElements[index].onmouseup();
         alreadyPressing = null;
+    }
+});
+
+window.addEventListener("keyup", (e) => {
+    const key = e.key.toLowerCase();
+
+    switch (key) {
+        case "f11": {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+            break;
+        }
     }
 });
 
@@ -1388,15 +1514,25 @@ function selectDialogueEntry(to) {
 
     for (const i of curEntries) {
         i.querySelector("div.select-highlight").style.display = "none";
+        i.querySelector("div.jump-highlight").style.display = "none";
+        i.querySelector("div.from-highlight").style.display = "none";
+        i.title = "";
     }
 
     curEntries[curSelectedEntry].querySelector("div.select-highlight").style.display = "block";
 
+    const entry = curScenario[curSelectedEntry];
+
+    if (entry.jump !== null) {
+        curEntries[entry.jump].querySelector("div.jump-highlight").style.display = "block";
+        curEntries[entry.jump].title = "Seeing an orange border? That means the entry you have selected will be jumping (skipping) to the entry with the orange border."
+    }
+
     // stop all talking models
     for (const i of Object.keys(characters)) {
         if (!characters[i].talking) continue;
-        characters[i].player.playAnimationWithTrack(1, 'talk_end', false);
-        characters[i].player.queueNextEmpty(1, 4 / 60);
+        characters[i].player.playAnimationWithTrack(2, "talk_end", false);
+        characters[i].player.queueNextEmpty(2, 4/60);
         characters[i].talking = false;
     }
 
@@ -1405,9 +1541,17 @@ function selectDialogueEntry(to) {
         i.end();
     }
 
+    const entriesWithJumps = [];
+
+    for (let i = 0; i < curScenario.length; i++) {
+        if (curScenario[i].jump !== null) {
+            entriesWithJumps.push(i);
+        }
+    }
+
     for (let i = 0; i < curSelectedEntry; i++) {
         curDialogue = i;
-        parseDialogue(true);
+        parseDialogue(!(i > curSelectedEntry - 2));
         
         if (curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
             skipOrProgress();
@@ -1416,6 +1560,25 @@ function selectDialogueEntry(to) {
 
     curDialogue = curSelectedEntry;
     parseDialogue();
+
+    let matchingFrom = null;
+    for (const i of entriesWithJumps) {
+        if (curScenario[i].jump === curSelectedEntry) {
+            matchingFrom = i;
+        }
+    }
+
+    if (matchingFrom !== null) {
+        curEntries[matchingFrom].querySelector("div.from-highlight").style.display = "block";
+        curEntries[matchingFrom].title = "Seeing a blue border? That means the entry you have selected will be coming from the entry with the blue border."
+
+        if (entry.jump !== null) {
+            curEntries[matchingFrom].querySelector("div.jump-highlight").style.borderStyle = "solid";
+            curEntries[matchingFrom].title = "Seeing an alternating border? The entry you have selected will be coming to the entry with the alternating border, while the entry with the alternating border will be coming to the entry you have selected. Why is it so confusing?"
+        } else {
+            curEntries[matchingFrom].querySelector("div.jump-highlight").style.borderStyle = "dotted";
+        }
+    }
 
     if (curDialogueState === "choice") {
         updateChoices();
@@ -1431,6 +1594,10 @@ dialogueAdd.addEventListener("click", () => {
     	speaker: "",
         speakerModel: null,
         speakerModelEmotion: null,
+
+        speakerModelPlayAnim: null,
+        speakerModelLoopAnim: false, // TO DO: ADD LOOP TOGGLE, ADD MIX DURATION
+        speakerModelMixAnim: 4/60,
 
         focusX: false,
         focusY: false,
@@ -1450,6 +1617,13 @@ dialogueAdd.addEventListener("click", () => {
         fadeInDur: 1,
         fadeOutDur: 1,
         fadeBlackDur: 1,
+
+        stopBgm: false,
+        stopSfx: false,
+        stopVo: false,
+        stopBgmDur: 0.5,
+        stopVoDur: 0.5,
+        stopSfxDur: 0.5,
 
         bgm: {
             key: null,
@@ -1683,11 +1857,20 @@ characterAdd.addEventListener("click", () => {
 characterDel.addEventListener("click", () => {
     if (curSelectedCharacter === null) return;
 
+    if (curScenario[curSelectedEntry]) {
+        if (curScenario[curSelectedEntry].speakerModel === curSelectedCharacter) {
+            curScenario[curSelectedEntry].speakerModel = null;
+        }
+    }
+
     deleteCharacter(curSelectedCharacter);
     curCharacters = curCharacters.filter((e) => e.id !== curSelectedCharacter);
 
     updateCharacterList();
     selectCharacterEntry(null); 
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
 });
 
 modelAddLoad.addEventListener("click", () => {
@@ -1754,6 +1937,7 @@ const voToggle = document.getElementById("vo-toggle");
 bgmToggle.addEventListener("click", () => {
     canBgmPlay = !canBgmPlay;
 
+    curBgmKey = null;
     curBgmPlaying.pause();
     bgmToggle.style.color = canBgmPlay ? "var(--accent)" : "var(--text-color-disabled)";
 
@@ -1763,6 +1947,7 @@ bgmToggle.addEventListener("click", () => {
 sfxToggle.addEventListener("click", () => {
     canSfxPlay = !canSfxPlay;
 
+    curSfxKey = null;
     curSfxPlaying.pause();
     sfxToggle.style.color = canSfxPlay ? "var(--accent)" : "var(--text-color-disabled)";
 
@@ -1772,6 +1957,7 @@ sfxToggle.addEventListener("click", () => {
 voToggle.addEventListener("click", () => {
     canVoPlay = !canVoPlay;
 
+    curVoKey = null;
     curVoPlaying.pause();
     voToggle.style.color = canVoPlay ? "var(--accent)" : "var(--text-color-disabled)";
 
@@ -1788,6 +1974,11 @@ const fieldDialogueContent = document.getElementById("field-dialogue-content");
 const fieldDialogueCharacter = document.getElementById("field-dialogue-charid");
 const fieldDialogueEmotion = document.getElementById("field-dialogue-emotion");
 const fieldDialogueMatchInit = document.getElementById("field-dialogue-matchinit");
+
+const fieldDialoguePlayAnim = document.getElementById("field-dialogue-playanim");
+const fieldDialogueRemoveAnim = document.getElementById("field-dialogue-removeanim");
+const fieldDialogueLoopAnim = document.getElementById("field-dialogue-loopanim")
+const fieldDialogueMixAnim = document.getElementById("field-dialogue-mixanim")
 
 const fieldDialogueFocusX = document.getElementById("field-dialogue-focx");
 const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
@@ -1808,6 +1999,13 @@ const fieldDialogueFadeBlack = document.getElementById("field-dialogue-fadeblack
 const fieldDialogueFadeInDur = document.getElementById("field-dialogue-fadeindur");
 const fieldDialogueFadeOutDur = document.getElementById("field-dialogue-fadeoutdur");
 const fieldDialogueFadeBlackDur = document.getElementById("field-dialogue-fadeblackdur");
+
+const fieldDialogueStopBGM = document.getElementById("field-dialogue-stopbgm")
+const fieldDialogueStopSFX = document.getElementById("field-dialogue-stopsfx")
+const fieldDialogueStopVO = document.getElementById("field-dialogue-stopvo")
+const fieldDialogueStopBGMDur = document.getElementById("field-dialogue-stopbgmdur")
+const fieldDialogueStopSFXDur = document.getElementById("field-dialogue-stopsfxdur")
+const fieldDialogueStopVODur = document.getElementById("field-dialogue-stopvodur")
 
 const fieldDialoguePlayBGM = document.getElementById("field-dialogue-playbgm");
 const fieldDialoguePlayBGMLink = document.getElementById("field-dialogue-playbgmlink");
@@ -1880,6 +2078,9 @@ function updateEditPanel() {
         e.style.display = "";
     }
 
+    fieldDialogueLoopAnim.innerHTML = entry.speakerModelLoopAnim ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueMixAnim.value = entry.speakerModelMixAnim;
+
     fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFocusZ.innerHTML = entry.focusZ ? "<i class='bx bx-check'></i>" : "";
@@ -1889,6 +2090,31 @@ function updateEditPanel() {
     fieldDialogueFocusPosZ.value = entry.focusZoom;
     fieldDialogueFocusPosR.value = entry.focusRot;
     fieldDialogueFocusDur.value = entry.focusDur !== null ? entry.focusDur : 1;
+
+    fieldDialogueStopBGM.innerHTML = entry.stopBgm ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueStopSFX.innerHTML = entry.stopSfx ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueStopVO.innerHTML = entry.stopVo ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueStopBGMDur.value = entry.stopBgmDur;
+    fieldDialogueStopSFXDur.value = entry.stopSfxDur;
+    fieldDialogueStopVODur.value = entry.stopVoDur;
+
+    if (entry.stopBgm) {
+        fieldDialogueStopBGMDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueStopBGMDur.setAttribute("disabled", "");
+    }
+
+    if (entry.stopSfx) {
+        fieldDialogueStopSFXDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueStopSFXDur.setAttribute("disabled", "");
+    }
+
+    if (entry.stopVo) {
+        fieldDialogueStopVODur.removeAttribute("disabled");
+    } else {
+        fieldDialogueStopVODur.setAttribute("disabled", "");
+    }
 
     fieldDialogueFadeIn.innerHTML = entry.fadeIn ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFadeOut.innerHTML = entry.fadeOut ? "<i class='bx bx-check'></i>" : "";
@@ -2034,11 +2260,33 @@ function updateEditPanel() {
                 }
     
                 fieldDialogueEmotion.value = entry.speakerModelEmotion;
+
+                fieldDialoguePlayAnim.removeAttribute("disabled");
+                fieldDialogueRemoveAnim.removeAttribute("disabled");
+                fieldDialogueLoopAnim.removeAttribute("disabled");
+                fieldDialogueMixAnim.removeAttribute("disabled");
+
+                fieldDialoguePlayAnim.innerHTML = "";
+                for (const i of characters[entry.speakerModel].emotions) {
+                    if (i.trim().toLowerCase() === "talk_start" || 
+                        i.trim().toLowerCase() === "talk_end") continue;
+                    
+                    const option = document.createElement("option");
+                    option.value = i;
+                    option.innerHTML = i;
+                    fieldDialoguePlayAnim.appendChild(option);
+                }
+                fieldDialoguePlayAnim.value = entry.speakerModelPlayAnim;
             } else {
                 fieldDialogueEmotion.innerHTML = "<option selected value=\"none\">No model selected</option>";
-
                 fieldDialogueEmotion.setAttribute("disabled", "");
                 fieldDialogueMatchInit.setAttribute("disabled", "");
+
+                fieldDialoguePlayAnim.innerHTML = "<option selected value=\"none\">No model selected</option>";
+                fieldDialoguePlayAnim.setAttribute("disabled", "");
+                fieldDialogueRemoveAnim.setAttribute("disabled", "");
+                fieldDialogueLoopAnim.setAttribute("disabled", "");
+                fieldDialogueMixAnim.setAttribute("disabled", "");
             }
             break;
         case "Choice":
@@ -2263,14 +2511,14 @@ fieldDialogueType.addEventListener("input", () => {
 
     switch (entry.type) {
         case "Speech":
-            // entry.choices = null;
-
             if (entry.speaker === null)
                 entry.speaker = "";
             if (entry.speakerModel === null)
                 entry.speaker = null;
             if (entry.speakerModelEmotion === null)
                 entry.speakerModelEmotion = null;
+            if (entry.speakerModelPlayAnim === null)
+                entry.speakerModelPlayAnim = null;
             if (entry.content === null)
                 entry.content = "";
 
@@ -2279,21 +2527,11 @@ fieldDialogueType.addEventListener("input", () => {
             if (entry.choices === null)
                 entry.choices = [];
 
-            // entry.speaker = null;
-            // entry.speakerModel = null;
-            // entry.speakerModelEmotion = null;
-            // entry.content = null;
-
             break;
         case "Monologue":
         case "Narration":
             if (entry.content === null)
                 entry.content = "";
-
-            // entry.choices = null;
-            // entry.speaker = null;
-            // entry.speakerModel = null;
-            // entry.speakerModelEmotion = null;
             break;
     }
 
@@ -2347,6 +2585,18 @@ fieldDialogueCharacter.addEventListener("input", () => {
             fieldDialogueEmotion.appendChild(option);
         }
         fieldDialogueEmotion.value = entry.speakerModelEmotion;
+
+        fieldDialoguePlayAnim.innerHTML = "";
+        for (const i of characters[entry.speakerModel].emotions) {
+            if (i.trim().toLowerCase() === "talk_start" || 
+                i.trim().toLowerCase() === "talk_end") continue;
+            
+            const option = document.createElement("option");
+            option.value = i;
+            option.innerHTML = i;
+            fieldDialoguePlayAnim.appendChild(option);
+        }
+        fieldDialoguePlayAnim.value = entry.speakerModelPlayAnim;
     }
 
     updateDialogueList();
@@ -2370,6 +2620,42 @@ fieldDialogueMatchInit.addEventListener("click", () => {
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialoguePlayAnim.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.speakerModelPlayAnim = fieldDialoguePlayAnim.value;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueRemoveAnim.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.speakerModelPlayAnim = null;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueLoopAnim.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.speakerModelLoopAnim = !entry.speakerModelLoopAnim;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueMixAnim.addEventListener("input", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.speakerModelMixAnim = parseFloat(fieldDialogueMixAnim.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry); 
 });
 
 fieldDialogueFocusX.addEventListener("click", () => {
@@ -2525,6 +2811,60 @@ fieldDialogueFadeBlackDur.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
+fieldDialogueStopBGM.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopBgm = !entry.stopBgm;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueStopSFX.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopSfx = !entry.stopSfx;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueStopVO.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopVo = !entry.stopVo;
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueStopBGMDur.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopBgmDur = parseFloat(fieldDialogueStopBGMDur.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueStopSFXDur.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopSfxDur = parseFloat(fieldDialogueStopSFXDur.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
+fieldDialogueStopVODur.addEventListener("click", () => {
+    const entry = curScenario[curDialogue];
+
+    entry.stopVoDur = parseFloat(fieldDialogueStopVODur.value);
+
+    updateDialogueList();
+    selectDialogueEntry(curSelectedEntry);
+});
+
 fieldDialoguePlayBGM.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
@@ -2543,6 +2883,7 @@ fieldDialoguePlayBGMLink.addEventListener("click", () => {
             required: true
         },
         type: 'input',
+        skipTaskbar: false
     })
     .then(r => {
         if (r !== null) {
@@ -2628,6 +2969,7 @@ fieldDialoguePlaySFXLink.addEventListener("click", () => {
             required: true
         },
         type: 'input',
+        skipTaskbar: false
     })
     .then(r => {
         if (r !== null) {
@@ -2695,6 +3037,7 @@ fieldDialoguePlayVOLink.addEventListener("click", () => {
             required: true
         },
         type: 'input',
+        skipTaskbar: false
     })
     .then(r => {
         if (r !== null) {
@@ -2836,6 +3179,7 @@ fieldChoiceAdd.addEventListener("click", () => {
 
     entry.choices.push({
         text: "Choice",
+        style: null,
         jump: null
     });
 
@@ -2887,6 +3231,8 @@ function updateInspectorPanel() {
         fieldCharacterInitO.value = character.initTransforms.opacity;
     } else {
         selectedGroupName = "world";
+
+        fieldWorldScnName.value = scnName;
 
         fieldWorldInitCamX.value = camera.initX;
         fieldWorldInitCamY.value = camera.initY;
@@ -3015,10 +3361,92 @@ fieldCharacterInitO.addEventListener("input", () => {
     updatePositionsToLatest();
 });
 
+const worldImport = document.getElementById("world-import");
+const worldExport = document.getElementById("world-export");
 const worldOpen = document.getElementById("world-open");
+
+worldImport.addEventListener("input", (e) => {
+    const fileList = worldImport.files;
+
+    if (fileList.length > 0) {
+        const filer = new FileReader();
+        filer.onload = (e) => {
+            const loaded = JSON.parse(e.target.result.toString());
+
+            ipcRenderer.send("load-file", webUtils.getPathForFile(fileList[0]));
+
+            //
+
+            scnName = loaded.name;
+
+            camera = loaded.camera;
+            bg = loaded.bg;
+
+            loadedBgs = loaded.loadedBgs;
+
+            loadedBgm = loaded.loadedBgm;
+            loadedSfx = loaded.loadedSfx;
+            loadedVo = loaded.loadedVo;
+
+            curColorDefinitions = loaded.colorDef;
+            
+            for (const i of curCharacters) {
+                deleteCharacter(i.id);
+            }
+
+            curCharacters = loaded.characters;
+
+            curScenario = [];
+
+            for (const i of loaded.scenario) {
+                dialogueAdd.dispatchEvent(new Event("click"));
+
+                const entry = curScenario[curScenario.length - 1];
+                for (const j of Object.keys(i)) {
+                    entry[j] = i[j]; // only apply to keys of loaded entry
+                }
+            }
+
+            //
+
+            hasLoaded = false;
+            fromImport = true;
+            init();
+        }
+
+        filer.readAsText(fileList[0]);
+    }
+});
+
+worldExport.addEventListener("click", async () => {
+    const toSave = {
+        name: scnName,
+
+        camera: camera,
+        bg: bg,
+
+        loadedBgs: loadedBgs,
+
+        loadedBgm: loadedBgm,
+        loadedSfx: loadedSfx,
+        loadedVo: loadedVo,
+
+        colorDef: curColorDefinitions,
+        characters: curCharacters,
+        scenario: curScenario
+    }
+
+    ipcRenderer.send("save-file", toSave);
+});
 
 worldOpen.addEventListener("click", () => {
     selectCharacterEntry(null);
+});
+
+const fieldWorldScnName = document.getElementById("field-world-scnname");
+
+fieldWorldScnName.addEventListener("input", () => {
+    scnName = fieldWorldScnName.value.trim();
 });
 
 const fieldWorldInitBG = document.getElementById("field-world-initbg");
@@ -3049,6 +3477,7 @@ fieldWorldInitBGLink.addEventListener("click", () => {
             required: true
         },
         type: 'input',
+        skipTaskbar: false
     })
     .then(r => {
         if (r !== null) {
@@ -3207,11 +3636,39 @@ const timelinePause = document.getElementById("timeline-pause");
 const timelinePlay = document.getElementById("timeline-play");
 const timelineEnd = document.getElementById("timeline-end");
 
+const noEntriesText = [
+    "There are no dialogue entries to present.",
+    "... I literally have nothing to show you.",
+    "I can't show you anything! Scene's empty.",
+    "...",
+    "You're desperately trying to get all my phrases.",
+    "It's funny.",
+    "You do know it's still Einkk speaking to you, right?",
+    "Hellooo? Is there someone with a brain here???",
+    "Helllooo????",
+    "Good god. I shouldn't have made this available to the public.",
+    "Oh dear...",
+    "I probably should've just made this available to Sweetie...",
+    "My life would be a-okay... Blame Enikk.",
+    "She forced me to release it to the public.",
+    "Hmmm...",
+    "Wow...",
+    "You're *really* persistent.",
+    "Oh!",
+    "Seems like I need to get back to work.",
+    "Better go now! Bye bye!",
+    "There are no dialogue entries to present."
+];
+
+let noEntriesTries = 0;
+
 timelinePresent.addEventListener("click", () => {
     if (!inEditor) return;
 
     if (curScenario.length === 0) {
-        popUpError("There are no dialogue entries to present.")
+        popUpError(noEntriesText[Math.min(Math.floor(noEntriesTries / 32), noEntriesText.length - 1)]);
+
+        noEntriesTries++;
         return;
     }
 
@@ -3221,6 +3678,9 @@ timelinePresent.addEventListener("click", () => {
         i.end();
     }
 
+    curBgmKey = null;
+    curSfxKey = null;
+    curVoKey = null;
     curBgmPlaying.pause();
     curSfxPlaying.pause();
     curVoPlaying.pause();
@@ -3300,7 +3760,11 @@ document.addEventListener("pointerup", (e) => {
     if (!holdingTimeline) return;
 
     holdingTimeline = false;
-})
+});
+
+ipcRenderer.on("popUpError", (event, text) => {
+    popUpError(text);
+});
 
 //
 
