@@ -30,6 +30,11 @@
     src: url('../../assets/fonts/Industry-Bold.ttf');
 }
 
+@font-face {
+    font-family: 'SUIT-Regular';
+    src: url('../../assets/fonts/SUIT-Regular.ttf');
+}
+
 :root {
     --text-color: #ccc;
     --text-color-disabled: #888;

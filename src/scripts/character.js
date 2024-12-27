@@ -45,7 +45,9 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
         anchorPoint: {
             x: 0.5,
             y: 0.5
-        }
+        },
+
+        layerKeys: {}
     }
 
     let runSpineVer;
@@ -92,6 +94,24 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
 
             console.log("CHARACTER " + immut + " LOADED!");
             characters[immut].loaded = true;
+
+            const layers = player.animationState.data.skeletonData.defaultSkin.attachments;
+            for (const i of layers) {
+                if (i) {
+                    const key = Object.keys(i)[0];
+                    if (i[key].constructor.name === "MeshAttachment") {
+                        const n = layers.indexOf(i);
+                        characters[immut].layerKeys[key] = n;
+
+                        layers[n][key].origColor = {};
+                        
+                        layers[n][key].origColor.r = layers[n][key].color.r;
+                        layers[n][key].origColor.g = layers[n][key].color.g;
+                        layers[n][key].origColor.b = layers[n][key].color.b;
+                        layers[n][key].origColor.a = layers[n][key].color.a;
+                    }
+                }
+            }
         }
     }
 

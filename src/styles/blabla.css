@@ -1,0 +1,244 @@
+div.blabla-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    font-family: "Pretendard-Bold";
+    font-size: 16px;
+
+    background-color: rgba(0, 0, 0, 0.6);
+
+    z-index: 999;
+    user-select: none;
+}
+
+div.blabla-wrapper {
+    width: 540px;
+    height: 900px;
+}
+
+div.blabla-header {
+    display: flex;
+    
+    position: relative;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 130px;
+
+    --dot-bg: #ffab0d;
+    --dot-color: #feb32a;
+    --dot-size: 2px;
+    --dot-space: 6px;
+    background:
+        linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+        linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+        var(--dot-color);
+    background-position: 6px -2px;
+
+
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+span#blabla-chatname {
+    position: relative;
+    top: 62px;
+    left: 59px;
+
+    font-family: "Pretendard-Bold";
+    font-size: 28px;
+    letter-spacing: 0.4px;
+    /* -webkit-text-stroke: 0.1px #fff; */
+
+    color: #fff;
+    text-shadow: 1.4px 1.4px 1px rgba(0, 0, 0, 0.2);
+}
+
+div.blabla-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: stretch;
+    row-gap: 7px;
+    
+    position: relative;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: calc(100% - 130px);
+
+    background-color: #f2f2f2;
+
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+
+    box-shadow: inset 0px 26px 16px -16px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+
+    padding: 0px 14px;
+    padding-top: 1px;
+    border-bottom: 12px solid #f2f2f2;
+
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+div.blabla-content::-webkit-scrollbar {
+    display: none;
+}
+
+div.blabla-chat-main {
+    position: relative;
+
+    width: 100%;
+    height: min-content;
+}
+
+div.blabla-chat-main.switch {
+    margin-top: 43px;
+}
+
+div.blabla-chat-main.switch.sender {
+    margin-top: 5px;
+}
+
+div.blabla-chat-main > div.chat-pfp {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    background-color: #fff;
+    background-image: url('../../assets/images/blabla/default_avatar.png');
+    /* background-image: url('https://nkas.pages.dev/characters/si_c012_00_s.png'); */
+    background-position: 50% 50%;
+    background-size: contain;
+    background-repeat: no-repeat;
+
+    border-radius: 100%;
+
+    width: 74px;
+    height: 74px;
+}
+
+div.blabla-chat-main > span.chat-speaker {
+    display: block;
+    
+    position: absolute;
+    top: -24px;
+    left: 102px;
+
+    font-size: 16px;
+    color: #323232;
+    /* text-shadow: 0.75px 0.75px 0px #323232; */
+    -webkit-text-stroke: 0.4px #323232;
+    letter-spacing: 0.3px;
+}
+
+div.blabla-chat-main > span.chat-bubble {
+    display: block;
+
+    position: relative;
+    left: 87px;
+
+    width: max-content;
+    max-width: calc(100% - 87px - 7px);
+
+    padding: 14px 22px;
+    padding-bottom: 10px;
+    padding-right: 21px;
+    -webkit-text-stroke: 0.2px #232323;
+
+    font-size: 20px;
+    color: #232323;
+    line-height: 31px;
+    letter-spacing: 0.1px;
+
+    background-color: #fff;
+    border-radius: 23px;
+    box-sizing: border-box;
+
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.0425));
+}
+div.blabla-chat-main > span.chat-bubble::before {
+    content: '';
+
+    display: block;
+
+    position: absolute;
+    bottom: 6px;
+    left: -4px;
+    width: 27px;
+    height: 11px;
+
+    background-image: url("../../assets/images/blabla/bubble_tail.png");
+    rotate: -19deg;
+
+    /* to do: fix tail layering */
+    /* until then, it's accurate enough */
+    /* filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.0425)); */
+}
+
+div.blabla-chat-main.sender > span.chat-bubble {
+    left: 100%;
+    transform: translateX(-100%) translateX(-14px);
+    font-family: "Pretendard-SemiBold";
+    letter-spacing: 0.2px;
+
+    color: #fff;
+    background-color: #fea50a;
+    -webkit-text-stroke: unset;
+
+    max-width: 367px;
+}
+
+div.blabla-chat-main.sender > span.chat-bubble::before {
+
+    bottom: 6px;
+    left: unset;
+    right: -4px;
+    rotate: 19deg;
+
+    background-image: url("../../assets/images/blabla/bubble_tail_sender.png");
+}
+
+div.blabla-chat-main.sender > span.chat-bubble.choice-list {
+    display: flex;
+    flex-direction: column;
+    row-gap: 9px;
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 12px 22px;
+
+    max-width: calc(100% - 7px - 14px);
+}
+
+span.chat-bubble.choice-list > span.choice-entry {
+    display: block;
+
+    padding: 0px 22px;
+    padding-top: 11px;
+    padding-bottom: 8px;
+
+    text-align: center;
+    font-family: "Pretendard-Bold";
+    -webkit-text-stroke: 0.2px #232323;
+
+    background-color: #fff;
+    color: #232323;
+
+    line-height: 32px;
+
+    box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.1);
+    
+    border-radius: 21px;
+}

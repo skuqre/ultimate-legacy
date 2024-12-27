@@ -25,6 +25,7 @@
     "@electron/remote": "^2.1.2",
     "@tweenjs/tween.js": "^25.0.0",
     "electron-prompt": "^1.7.0",
+    "electron-settings": "^4.0.4",
     "electron-squirrel-startup": "^1.0.1",
     "fuzzysort": "^3.1.0"
   }

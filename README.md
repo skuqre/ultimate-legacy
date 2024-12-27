@@ -8,7 +8,7 @@ Ultimate Scenario Creator
 
 *"How accurate is too accurate?"*
 
-Currently WIP. Contributions welcome!
+Currently WIP.
 
 Code is under GNU GPLv3.<br>
 **All assets belong to SHIFT UP CORP. and Proxima Beta Ltd.**.<br>
@@ -27,3 +27,8 @@ The accuracy of the tool more leads to the Summer 2024 Version (during BEAUTY FU
 **No, that is not my goal**. My goal is to create something better than what the [Dialogue Generator](https://skuqre.github.io/nikke-font-generator/dialogue/) currently is. Like the site, the final product will have watermarks in order to prevent misinformation.
 
 This tool is **only** meant for entertainment. **Never misinformation**. When a watermark is cropped, that is where issues should arise. When you see someone using this to misinform, please report on our [Twitter](https://twitter.com/nikkefontgen/) and help us out!
+
+## TO DO
+
+- [ ] Improve the code quality...
+- [ ] Improve the HTML and CSS code quality...

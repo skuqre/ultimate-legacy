@@ -182,6 +182,12 @@ div.generic-panel b {
     font-family: 'Pretendard-Bold';
 }
 
+div.generic-panel b > span {
+    font-size: 12px;
+    color: var(--text-color-disabled);
+    font-weight: normal;
+}
+
 div.generic-panel > div {
     display: flex;
     flex-direction: column;
@@ -472,7 +478,8 @@ div#colordef-list > div.generic-list-item {
     height: 48px;
 }
 
-div#colordef-list > div.generic-list-item > input[type="color"] {
+div#colordef-list > div.generic-list-item > input[type="color"],
+div#field-character-layers > div.generic-list-item input[type="color"] {
     width: 64px;
     height: 32px;
 
@@ -483,7 +490,8 @@ div#colordef-list > div.generic-list-item > input[type="color"] {
     margin: 0;
 }
 
-div#field-choice-list {
+div#field-choice-list,
+div#field-character-layers {
     height: 200px;
     border: 1px solid var(--darker);
     border-radius: 4px;
@@ -491,7 +499,8 @@ div#field-choice-list {
     box-sizing: border-box;
 }
 
-div#field-choice-list > div.generic-list-item {
+div#field-choice-list > div.generic-list-item,
+div#field-character-layers > div.generic-list-item {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -760,4 +769,9 @@ div.popup > span {
         opacity: 0;
         transform: translate(-50%, -50%) translateY(-16px);
     }
+}
+
+div#settings-main {
+    font-family: 'Pretendard-Bold';
+
 }

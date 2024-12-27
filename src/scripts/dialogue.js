@@ -268,7 +268,7 @@ function parseDialogue(noTalk = false) {
             dialogueContainerChoice.style.opacity = "1";
             dialogueGradientChoice.style.opacity = "1";
 
-            if (!inEditor) {
+            if (!inEditor && entry.choices.length > 0) {
                 sfxChoiceEnter.play();
             }
 
@@ -368,6 +368,42 @@ function parseDialogue(noTalk = false) {
         tweens.push(tween);
     }
 
+    if (entry.bg.fade) {
+        const tween = new Tween({perc: 0})
+            .to({
+                perc: 1
+            }, (entry.bg.fadeDur !== null ? entry.bg.fadeDur : 1) * 1000)
+            .easing(Easing.Sinusoidal.InOut)
+            .onUpdate((n) => {
+                backgroundMain.style.opacity = n.perc;
+            })
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
+    }
+
+    if (entry.bg.key !== null) {
+        bg.link = entry.bg.key;
+    }
+
+    if (entry.bg.change.x || entry.bg.change.y || entry.bg.change.s || entry.bg.change.r) {
+        const tween = new Tween(bg)
+            .to({
+                x: entry.bg.change.x ? entry.bg.change.changeX : bg.x,
+                y: entry.bg.change.y ? entry.bg.change.changeY : bg.y,
+                s: entry.bg.change.s ? entry.bg.change.changeS : bg.s,
+                r: entry.bg.change.r ? entry.bg.change.changeR : bg.r,
+            }, (entry.bg.change.changeDur !== null ? entry.bg.change.changeDur : 1) * 1000)
+            .easing(Easing[entry.bg.change.changeEase][entry.bg.change.changeEaseDir])
+            .onComplete(() => {
+                tweens.splice(tweens.indexOf(tween), 1);
+            })
+            .start();
+        tweens.push(tween);
+    }
+
     if (entry.bgm.key !== null && (!inEditor || canBgmPlay) && curBgmKey !== entry.bgm.key) {
         curBgmKey = entry.bgm.key;
         curBgmPlaying.pause();
@@ -426,7 +462,6 @@ function parseDialogue(noTalk = false) {
             }, (entry.stopBgmDur !== null ? entry.stopBgmDur : 1) * 1000)
             .easing(Easing.Sinusoidal.InOut)
             .onUpdate((n) => {
-                console.log(1 - n.perc)
                 curBgmPlaying.volume = (1 - n.perc) * volCapture;
             })
             .onComplete(() => {
@@ -646,7 +681,7 @@ let prev = 0;
 function updateText() {
     const lettersToDisplay = clamp(Math.floor(curDialogueCurTime / (4/60)), 0, curDialogueContent.length);
 
-    if (prev !== lettersToDisplay && !["narration", "monologue", "choice"].includes(curDialogueState)) {
+    if (prev !== lettersToDisplay && !["narration", "monologue", "choice"].includes(curDialogueState) && !inEditor) {
         sfxType.play();
     }
 
@@ -919,8 +954,11 @@ function skipOrProgress() {
             }
 
             // end all tweens
+            // that would finish before the dialogue is done
             for (const i of tweens) {
-                i.end();
+                if (i.getDuration() / 1000 <= curDialogueMaxTime) {
+                    i.end();
+                }
             }
         }
     } else if (tweens.length > 0) {
@@ -1022,11 +1060,11 @@ function dialogueLoop(elapsed) {
 
     if (curScenario.length > 0 && !inEditor && curScenarioAuto) {
         if (curScenario[curDialogue].type !== "Choice") {
-            // these all have to be true to be considered "done"
             const conditionsToBeDone = [
                 curDialogueCurTime >= curDialogueMaxTime,
                 tweens.length === 0,
-                // todo: audio file playing
+                curSfxPlaying.played.length > 0 ? curSfxPlaying.ended : true,
+                curVoPlaying.played.length > 0 ? curVoPlaying.ended : true,
             ];
         
             if (!conditionsToBeDone.includes(false)) {
@@ -1177,6 +1215,40 @@ function initPositions() {
         }
 
         characters[i.id].player.animationState.setEmptyAnimation(1, 4/60);
+    }
+
+    initEdits();
+}
+
+function initEdits() {
+    if (!hasLoaded) return;
+    for (const i of curCharacters) {
+        if (i.initLayerEdits) {
+            const layers = characters[i.id].player.animationState.data.skeletonData.defaultSkin.attachments;
+
+            for (const j of Object.keys(characters[i.id].layerKeys)) {
+                const n = characters[i.id].layerKeys[j];
+
+                layers[n][j].color.r = layers[n][j].origColor.r;
+                layers[n][j].color.g = layers[n][j].origColor.g;
+                layers[n][j].color.b = layers[n][j].origColor.b;
+                layers[n][j].color.a = layers[n][j].origColor.a;
+            }
+
+            for (const j of Object.keys(i.initLayerEdits)) {
+                const n = characters[i.id].layerKeys[j];
+
+                const col = hexToRgb(i.initLayerEdits[j].color);
+                const alp = clamp(i.initLayerEdits[j].alpha, 0, 1);
+
+                layers[n][j].color.r = col[0] / 255;
+                layers[n][j].color.g = col[1] / 255;
+                layers[n][j].color.b = col[2] / 255;
+                layers[n][j].color.a = alp;
+            }
+        } else {
+            i.initLayerEdits = {};
+        }
     }
 }
 
@@ -1552,11 +1624,23 @@ function selectDialogueEntry(to) {
     for (let i = 0; i < curSelectedEntry; i++) {
         curDialogue = i;
         parseDialogue(!(i > curSelectedEntry - 2));
+
+        // always.
+        for (const i of tweens) {
+            i.end();
+        }
         
         if (curDialogueState !== "choice" && curScenario[curDialogue].content.trim().length > 0) {
             skipOrProgress();
         }
     }
+
+    curBgmKey = null;
+    curSfxKey = null;
+    curVoKey = null;
+    curBgmPlaying.pause();
+    curSfxPlaying.pause();
+    curVoPlaying.pause();
 
     curDialogue = curSelectedEntry;
     parseDialogue();
@@ -1596,8 +1680,7 @@ dialogueAdd.addEventListener("click", () => {
         speakerModelEmotion: null,
 
         speakerModelPlayAnim: null,
-        speakerModelLoopAnim: false, // TO DO: ADD LOOP TOGGLE, ADD MIX DURATION
-        speakerModelMixAnim: 4/60,
+        speakerModelLoopAnim: false,
 
         focusX: false,
         focusY: false,
@@ -1617,6 +1700,25 @@ dialogueAdd.addEventListener("click", () => {
         fadeInDur: 1,
         fadeOutDur: 1,
         fadeBlackDur: 1,
+
+        bg: {
+            key: null,
+            fade: false,
+            fadeDur: 0.5,
+            change: {
+                x: false,
+                y: false,
+                s: false,
+                r: false,
+                changeX: 1920 / 2,
+                changeY: 1080 / 2,
+                changeS: 1.0,
+                changeR: 0,
+                changeDur: 1.0,
+                changeEase: "Sinusoidal",
+                changeEaseDir: "InOut"
+            }
+        },
 
         stopBgm: false,
         stopSfx: false,
@@ -1827,11 +1929,12 @@ function updateModelList(a) {
                 initTransforms: {
                     x: 1920 * 0.5,
                     y: 1080 * 0.9,
-                    rotate: 0,
                     scale: 1,
+                    rotate: 0,
                     opacity: 1
                 },
-                customPath: "https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/" + invertedModels[immut]
+                customPath: "https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/" + invertedModels[immut],
+                initLayerEdits: {}
             });
 
             button.innerHTML = `<i class="bx bx-plus"></i>`;
@@ -1978,7 +2081,6 @@ const fieldDialogueMatchInit = document.getElementById("field-dialogue-matchinit
 const fieldDialoguePlayAnim = document.getElementById("field-dialogue-playanim");
 const fieldDialogueRemoveAnim = document.getElementById("field-dialogue-removeanim");
 const fieldDialogueLoopAnim = document.getElementById("field-dialogue-loopanim")
-const fieldDialogueMixAnim = document.getElementById("field-dialogue-mixanim")
 
 const fieldDialogueFocusX = document.getElementById("field-dialogue-focx");
 const fieldDialogueFocusY = document.getElementById("field-dialogue-focy");
@@ -1999,6 +2101,24 @@ const fieldDialogueFadeBlack = document.getElementById("field-dialogue-fadeblack
 const fieldDialogueFadeInDur = document.getElementById("field-dialogue-fadeindur");
 const fieldDialogueFadeOutDur = document.getElementById("field-dialogue-fadeoutdur");
 const fieldDialogueFadeBlackDur = document.getElementById("field-dialogue-fadeblackdur");
+
+const fieldDialogueChangeBG = document.getElementById("field-dialogue-changebg")
+const fieldDialogueChangeBGLink = document.getElementById("field-dialogue-changebglink")
+const fieldDialogueChangeBGLoad = document.getElementById("field-dialogue-changebgload")
+const fieldDialogueFadeBG = document.getElementById("field-dialogue-fadebg")
+const fieldDialogueFadeBGDur = document.getElementById("field-dialogue-fadebgdur")
+
+const fieldDialogueChangeBGX = document.getElementById("field-dialogue-cbgx")
+const fieldDialogueChangeBGY = document.getElementById("field-dialogue-cbgy")
+const fieldDialogueChangeBGS = document.getElementById("field-dialogue-cbgs")
+const fieldDialogueChangeBGR = document.getElementById("field-dialogue-cbgr")
+const fieldDialogueChangeBGToX = document.getElementById("field-dialogue-cbgtox")
+const fieldDialogueChangeBGToY = document.getElementById("field-dialogue-cbgtoy")
+const fieldDialogueChangeBGToS = document.getElementById("field-dialogue-cbgtos")
+const fieldDialogueChangeBGToR = document.getElementById("field-dialogue-cbgtor")
+const fieldDialogueChangeBGDur = document.getElementById("field-dialogue-cbgdur")
+const fieldDialogueChangeBGEaseType = document.getElementById("field-dialogue-cbgeasetype")
+const fieldDialogueChangeBGEaseDir = document.getElementById("field-dialogue-cbgeasedir")
 
 const fieldDialogueStopBGM = document.getElementById("field-dialogue-stopbgm")
 const fieldDialogueStopSFX = document.getElementById("field-dialogue-stopsfx")
@@ -2079,7 +2199,6 @@ function updateEditPanel() {
     }
 
     fieldDialogueLoopAnim.innerHTML = entry.speakerModelLoopAnim ? "<i class='bx bx-check'></i>" : "";
-    fieldDialogueMixAnim.value = entry.speakerModelMixAnim;
 
     fieldDialogueFocusX.innerHTML = entry.focusX ? "<i class='bx bx-check'></i>" : "";
     fieldDialogueFocusY.innerHTML = entry.focusY ? "<i class='bx bx-check'></i>" : "";
@@ -2122,6 +2241,66 @@ function updateEditPanel() {
     fieldDialogueFadeInDur.value = entry.fadeInDur;
     fieldDialogueFadeOutDur.value = entry.fadeOutDur;
     fieldDialogueFadeBlackDur.value = entry.fadeBlackDur;
+
+    fieldDialogueChangeBG.innerHTML = `<option value="???">None (don't change)</option>`;
+    for (const i of Object.keys(loadedBgs)) {
+        fieldDialogueChangeBG.innerHTML += `
+        <option value="${i}">${i}</option>
+        `;
+    }
+    fieldDialogueChangeBG.value = entry.bg.key ?? "???";
+
+    fieldDialogueFadeBG.innerHTML = entry.bg.fade ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueFadeBGDur.value = entry.bg.fadeDur;
+
+    fieldDialogueChangeBGX.innerHTML = entry.bg.change.x ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueChangeBGY.innerHTML = entry.bg.change.y ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueChangeBGS.innerHTML = entry.bg.change.s ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueChangeBGR.innerHTML = entry.bg.change.r ? "<i class='bx bx-check'></i>" : "";
+    fieldDialogueChangeBGToX.value = entry.bg.change.changeX;
+    fieldDialogueChangeBGToY.value = entry.bg.change.changeY;
+    fieldDialogueChangeBGToS.value = entry.bg.change.changeS;
+    fieldDialogueChangeBGToR.value = entry.bg.change.changeR;
+
+    if (entry.bg.change.x) {
+        fieldDialogueChangeBGToX.removeAttribute("disabled");
+    } else {
+        fieldDialogueChangeBGToX.setAttribute("disabled", "");
+    }
+
+    if (entry.bg.change.y) {
+        fieldDialogueChangeBGToY.removeAttribute("disabled");
+    } else {
+        fieldDialogueChangeBGToY.setAttribute("disabled", "");
+    }
+
+    if (entry.bg.change.s) {
+        fieldDialogueChangeBGToS.removeAttribute("disabled");
+    } else {
+        fieldDialogueChangeBGToS.setAttribute("disabled", "");
+    }
+
+    if (entry.bg.change.r) {
+        fieldDialogueChangeBGToR.removeAttribute("disabled");
+    } else {
+        fieldDialogueChangeBGToR.setAttribute("disabled", "");
+    }
+
+    fieldDialogueChangeBGDur.value = entry.bg.change.changeDur;
+    fieldDialogueChangeBGEaseType.innerHTML = "";
+    for (const i of Object.getOwnPropertyNames(Easing)) {
+        if (i.trim().toLowerCase() !== "generatepow") {
+            fieldDialogueChangeBGEaseType.innerHTML += `<option value="${i}">${i}</option>`
+        }
+    }
+    fieldDialogueChangeBGEaseType.value = entry.bg.change.changeEase;
+    fieldDialogueChangeBGEaseDir.value = entry.bg.change.changeEaseDir;
+
+    if (entry.bg.fade) {
+        fieldDialogueFadeBGDur.removeAttribute("disabled");
+    } else {
+        fieldDialogueFadeBGDur.setAttribute("disabled", "");
+    }
 
     fieldDialoguePlayBGM.innerHTML = `<option value="???">None</option>`;
     for (const i of Object.keys(loadedBgm)) {
@@ -2264,7 +2443,6 @@ function updateEditPanel() {
                 fieldDialoguePlayAnim.removeAttribute("disabled");
                 fieldDialogueRemoveAnim.removeAttribute("disabled");
                 fieldDialogueLoopAnim.removeAttribute("disabled");
-                fieldDialogueMixAnim.removeAttribute("disabled");
 
                 fieldDialoguePlayAnim.innerHTML = "";
                 for (const i of characters[entry.speakerModel].emotions) {
@@ -2286,7 +2464,6 @@ function updateEditPanel() {
                 fieldDialoguePlayAnim.setAttribute("disabled", "");
                 fieldDialogueRemoveAnim.setAttribute("disabled", "");
                 fieldDialogueLoopAnim.setAttribute("disabled", "");
-                fieldDialogueMixAnim.setAttribute("disabled", "");
             }
             break;
         case "Choice":
@@ -2649,95 +2826,114 @@ fieldDialogueLoopAnim.addEventListener("click", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldDialogueMixAnim.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
+const dialogueFields = [
+    { f: fieldDialogueFocusX, p: "focusX", t: "bool" },
+    { f: fieldDialogueFocusY, p: "focusY", t: "bool" },
+    { f: fieldDialogueFocusZ, p: "focusZ", t: "bool" },
+    { f: fieldDialogueFocusR, p: "focusR", t: "bool" },
 
-    entry.speakerModelMixAnim = parseFloat(fieldDialogueMixAnim.value);
+    { f: fieldDialogueFocusPosX, p: "focusPosX", t: "num"},
+    { f: fieldDialogueFocusPosY, p: "focusPosY", t: "num"},
+    { f: fieldDialogueFocusPosZ, p: "focusZoom", t: "num"},
+    { f: fieldDialogueFocusPosR, p: "focusRot", t: "num"},
 
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry); 
+    { f: fieldDialogueFocusDur, p: "focusDur", t: "num"},
+
+    { f: fieldDialogueFadeIn, p: "fadeIn", t: "bool" },
+    { f: fieldDialogueFadeOut, p: "fadeOut", t: "bool" },
+    { f: fieldDialogueFadeBlack, p: "fadeToBlack", t: "bool" },
+
+    { f: fieldDialogueFadeInDur, p: "fadeInDur", t: "num" },
+    { f: fieldDialogueFadeOutDur, p: "fadeOutDur", t: "num" },
+    { f: fieldDialogueFadeBlackDur, p: "fadeBlackDur", t: "num" },
+
+    { f: fieldDialogueFadeBG, p: "bg.fade", t: "bool"},
+    { f: fieldDialogueFadeBGDur, p: "bg.fadeDur", t: "num"},
+
+    { f: fieldDialogueChangeBGX, p: "bg.change.x", t: "bool"},
+    { f: fieldDialogueChangeBGY, p: "bg.change.y", t: "bool"},
+    { f: fieldDialogueChangeBGS, p: "bg.change.s", t: "bool"},
+    { f: fieldDialogueChangeBGR, p: "bg.change.r", t: "bool"},
+
+    { f: fieldDialogueChangeBGToX, p: "bg.change.changeX", t: "num"},
+    { f: fieldDialogueChangeBGToY, p: "bg.change.changeY", t: "num"},
+    { f: fieldDialogueChangeBGToS, p: "bg.change.changeS", t: "num"},
+    { f: fieldDialogueChangeBGToR, p: "bg.change.changeR", t: "num"},
+
+
+    { f: fieldDialogueChangeBG, p: "bg.key", t: "select???null" },
+    { f: fieldDialogueChangeBGDur, p: "bg.change.changeDur", t: "num" },
+
+    { f: fieldDialogueStopBGM, p: "stopBgm", t: "bool" },
+    { f: fieldDialogueStopSFX, p: "stopSfx", t: "bool" },
+    { f: fieldDialogueStopVO, p: "stopVo", t: "bool" },
+
+    { f: fieldDialoguePlayBGM, p: "bgm.key", t: "select???null" },
+    { f: fieldDialoguePlaySFX, p: "sfx.key", t: "select???null" },
+    { f: fieldDialoguePlayVO, p: "vo.key", t: "select???null" },
+
+    { f: fieldDialoguePlayBGMFade, p: "bgm.fade", t: "bool" },
+    { f: fieldDialoguePlayBGMFadeDur, p: "bgm.fadeDur", t: "num" },
+
+    { f: fieldDialogueStopBGMDur, p: "stopBgmDur", t: "num" },
+    { f: fieldDialogueStopSFXDur, p: "stopSfxDur", t: "num" },
+    { f: fieldDialogueStopVODur, p: "stopVoDur", t: "num" },
+
+    { f: fieldDialoguePlayBGMVolume, p: "bgm.volume", t: "clamp01" },
+    { f: fieldDialoguePlaySFXVolume, p: "sfx.volume", t: "clamp01" },
+    { f: fieldDialoguePlayVOVolume, p: "vo.volume", t: "clamp01" }
+];
+
+dialogueFields.forEach(({f, p, t}) => {
+    switch (t) {
+        case "bool": {
+            f.addEventListener("click", () => {
+                const entry = curScenario[curDialogue];
+
+                setNestedProperty(entry, p, !getNestedProperty(entry, p));
+                // entry[p] = !entry[p];
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            });
+            break;
+        }
+        case "num": {
+            f.addEventListener("input", () => {
+                const entry = curScenario[curDialogue];
+
+                setNestedProperty(entry, p, parseFloat(f.value));
+                // entry[p] = parseFloat(f.value);
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            });
+            break;
+        }
+        case "clamp01": {
+            f.addEventListener("input", () => {
+                const entry = curScenario[curDialogue];
+
+                setNestedProperty(entry, p, clamp(parseFloat(f.value), 0, 1));
+                // entry[p] = parseFloat(f.value);
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            });
+            break;
+        }
+        case "select???null": {
+            f.addEventListener("input", () => {
+                const entry = curScenario[curDialogue];
+
+                setNestedProperty(entry, p, (f.value === "???" ? null : f.value));
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            });
+        }
+    }
 });
-
-fieldDialogueFocusX.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusX = !entry.focusX;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusY.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusY = !entry.focusY;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusZ.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusZ = !entry.focusZ;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusR.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusR = !entry.focusR;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusPosX.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusPosX = parseFloat(fieldDialogueFocusPosX.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusPosY.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusPosY = parseFloat(fieldDialogueFocusPosY.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusPosZ.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusZoom = parseFloat(fieldDialogueFocusPosZ.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusPosR.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusRot = parseFloat(fieldDialogueFocusPosR.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFocusDur.addEventListener("change", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.focusDur = parseFloat(fieldDialogueFocusDur.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-})
 
 fieldDialogueEaseType.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
@@ -2757,118 +2953,73 @@ fieldDialogueEaseDir.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldDialogueFadeIn.addEventListener("click", () => {
+fieldDialogueChangeBGLink.addEventListener("click", () => {
+    prompt({
+        title: "Load from URL",
+        label: "Please input a URL to load from:",
+        inputAttrs: {
+            type: 'url',
+            required: true
+        },
+        type: 'input',
+        skipTaskbar: false
+    })
+    .then(r => {
+        if (r !== null) {
+            const image = r;
+            const filename = path.parse(path.basename(image)).name;
+
+            loadedBgs[filename] = image;
+
+            const entry = curScenario[curDialogue];
+
+            entry.bg.key = filename;
+
+            updateDialogueList();
+            selectDialogueEntry(curSelectedEntry);
+        }
+    })
+    .catch(console.error);
+});
+
+fieldDialogueChangeBGLoad.addEventListener("input", () => {
+    const fileList = fieldDialogueChangeBGLoad.files;
+
+    if (fileList.length > 0) {
+        for (const i of fileList) {
+            const filer = new FileReader();
+            filer.onload = (e) => {
+                const image = e.target.result.toString();
+                const filename = path.parse(path.basename(webUtils.getPathForFile(i))).name;
+
+                loadedBgs[filename] = image;
+
+                const entry = curScenario[curDialogue];
+
+                entry.bg.key = filename;
+
+                updateDialogueList();
+                selectDialogueEntry(curSelectedEntry);
+            }
+
+            filer.readAsDataURL(i);
+        }
+    }
+});
+
+fieldDialogueChangeBGEaseType.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
-    entry.fadeIn = !entry.fadeIn;
+    entry.bg.change.changeEase = fieldDialogueChangeBGEaseType.value;
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldDialogueFadeOut.addEventListener("click", () => {
+fieldDialogueChangeBGEaseDir.addEventListener("input", () => {
     const entry = curScenario[curDialogue];
 
-    entry.fadeOut = !entry.fadeOut;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFadeBlack.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.fadeToBlack = !entry.fadeToBlack;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFadeInDur.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.fadeInDur = fieldDialogueFadeInDur.value;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFadeOutDur.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.fadeOutDur = fieldDialogueFadeOutDur.value;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueFadeBlackDur.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.fadeBlackDur = fieldDialogueFadeBlackDur.value;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopBGM.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopBgm = !entry.stopBgm;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopSFX.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopSfx = !entry.stopSfx;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopVO.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopVo = !entry.stopVo;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopBGMDur.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopBgmDur = parseFloat(fieldDialogueStopBGMDur.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopSFXDur.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopSfxDur = parseFloat(fieldDialogueStopSFXDur.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialogueStopVODur.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.stopVoDur = parseFloat(fieldDialogueStopVODur.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialoguePlayBGM.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.bgm.key = fieldDialoguePlayBGM.value === "???" ? null : fieldDialoguePlayBGM.value;
+    entry.bg.change.changeEaseDir = fieldDialogueChangeBGEaseDir.value;
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
@@ -2924,42 +3075,6 @@ fieldDialoguePlayBGMLoad.addEventListener("input", () => {
     }
 });
 
-fieldDialoguePlayBGMVolume.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.bgm.volume = clamp(parseFloat(fieldDialoguePlayBGMVolume.value), 0, 1);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialoguePlayBGMFade.addEventListener("click", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.bgm.fade = !entry.bgm.fade;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialoguePlayBGMFadeDur.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.bgm.fadeDur = parseFloat(fieldDialoguePlayBGMFadeDur.value);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialoguePlaySFX.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.sfx.key = fieldDialoguePlaySFX.value === "???" ? null : fieldDialoguePlaySFX.value;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
 fieldDialoguePlaySFXLink.addEventListener("click", () => {
     prompt({
         title: "Load from URL",
@@ -3008,24 +3123,6 @@ fieldDialoguePlaySFXLoad.addEventListener("input", () => {
             filer.readAsDataURL(i);
         }
     }
-});
-
-fieldDialoguePlaySFXVolume.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.sfx.volume = clamp(parseFloat(fieldDialoguePlaySFXVolume.value), 0, 1);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
-fieldDialoguePlayVO.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.vo.key = fieldDialoguePlayVO.value === "???" ? null : fieldDialoguePlayVO.value;
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
 });
 
 fieldDialoguePlayVOLink.addEventListener("click", () => {
@@ -3078,15 +3175,6 @@ fieldDialoguePlayVOLoad.addEventListener("input", () => {
     }
 });
 
-fieldDialoguePlayVOVolume.addEventListener("input", () => {
-    const entry = curScenario[curDialogue];
-
-    entry.vo.volume = clamp(parseFloat(fieldDialoguePlayVOVolume.value), 0, 1);
-
-    updateDialogueList();
-    selectDialogueEntry(curSelectedEntry);
-});
-
 fieldDialogueTLDurLock.addEventListener("click", () => {
     const entry = curScenario[curDialogue];
 
@@ -3098,7 +3186,7 @@ fieldDialogueTLDurLock.addEventListener("click", () => {
 
     updateDialogueList();
     selectDialogueEntry(curSelectedEntry);
-})
+});
 
 fieldDialogueTLDur.addEventListener("change", () => {
     const entry = curScenario[curDialogue];
@@ -3229,6 +3317,8 @@ function updateInspectorPanel() {
         fieldCharacterInitR.value = character.initTransforms.rotate;
         fieldCharacterInitS.value = character.initTransforms.scale;
         fieldCharacterInitO.value = character.initTransforms.opacity;
+
+        updateCharacterLayers(character, Object.keys(characters[character.id].layerKeys));
     } else {
         selectedGroupName = "world";
 
@@ -3272,6 +3362,99 @@ const fieldCharacterInitR = document.getElementById("field-character-initr");
 const fieldCharacterInitS = document.getElementById("field-character-inits");
 const fieldCharacterInitO = document.getElementById("field-character-inito");
 
+const fieldCharacterLayerSearch = document.getElementById("field-character-layersearch");
+const fieldCharacterLayers = document.getElementById("field-character-layers");
+
+function updateCharacterLayers(character, arr) {
+    fieldCharacterLayers.innerHTML = "";
+    const characterSel = curCharacters.filter((e) => e.id === character.id)[0];
+
+    for (const i of arr) {
+        const div = document.createElement("div")
+        div.classList.add("generic-list-item");
+
+        const layerName = document.createElement("input")
+        layerName.setAttribute("type", "text");
+        layerName.setAttribute("disabled", "");
+        layerName.value = i;
+        layerName.style.width = "194px"
+        layerName.style.height = "32px";
+        div.appendChild(layerName);
+
+        const tray = document.createElement("div");
+        tray.classList.add("button-tray");
+
+        const color = document.createElement("input");
+        color.setAttribute("type", "color");
+        tray.appendChild(color);
+
+        const alpha = document.createElement("input");
+        alpha.setAttribute("type", "number");
+        alpha.setAttribute("step", "0.1");
+        alpha.setAttribute("min", "0");
+        alpha.setAttribute("max", "1");
+        alpha.style.width = "64px";
+        tray.appendChild(alpha);
+
+        const layers = characters[character.id].player.animationState.data.skeletonData.defaultSkin.attachments;
+        const immut = characters[character.id].layerKeys[i];
+
+        let colVal = rgbToHex(layers[immut][i].color.r * 255, layers[immut][i].color.g * 255, layers[immut][i].color.b * 255);
+        let alpVal = layers[immut][i].color.a;
+
+        if (Object.keys(characterSel.initLayerEdits).includes(i)) {
+            colVal = characterSel.initLayerEdits[i].color;
+            alpVal = characterSel.initLayerEdits[i].alpha;
+        }
+
+        color.value = colVal;
+        alpha.value = alpVal;
+
+        color.oninput = () => {
+            if (color.value !== "#ffffff" || clamp(parseFloat(alpha.value), 0, 1) !== 1) {
+                characterSel.initLayerEdits[i] = {
+                    color: color.value,
+                    alpha: clamp(parseFloat(alpha.value), 0, 1)
+                }
+            } else {
+                if (Object.keys(characterSel.initLayerEdits).includes(i)) {
+                    delete characterSel.initLayerEdits[i];
+                }
+            }
+
+            initEdits();
+        }
+        alpha.oninput = color.oninput;
+
+        color.onchange = () => {
+            selectDialogueEntry(curSelectedEntry);
+        }
+        alpha.onchange = color.onchange;
+
+        div.appendChild(tray);
+
+        fieldCharacterLayers.appendChild(div);
+    }
+}
+
+fieldCharacterLayerSearch.addEventListener("input", () => {
+    if (curSelectedCharacter === null) return;
+    const model = characters[curSelectedCharacter];
+
+    const resultsFuzzy = fuzzysort.go(fieldCharacterLayerSearch.value, Object.keys(model.layerKeys), {all: false});
+    const results = [];
+
+    for (const i of resultsFuzzy) {
+        results.push(i.target);
+    }
+
+    if (results.length > 0) {
+        updateCharacterLayers(model, results);
+    } else {
+        updateCharacterLayers(model, Object.keys(model.layerKeys));
+    }
+});
+
 fieldCharacterName.addEventListener("input", () => {
     if (curSelectedCharacter === null) return;
     const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
@@ -3311,54 +3494,24 @@ fieldCharacterInitAnim.addEventListener("input", () => {
     selectDialogueEntry(curSelectedEntry);
 });
 
-fieldCharacterInitX.addEventListener("input", () => {
-    if (curSelectedCharacter === null) return;
-    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
+const charInitFields = [
+    { f: fieldCharacterInitX, p: "x" },
+    { f: fieldCharacterInitY, p: "y" },
+    { f: fieldCharacterInitS, p: "scale" },
+    { f: fieldCharacterInitR, p: "rotate" },
+    { f: fieldCharacterInitO, p: "opacity" },
+];
 
-    character.initTransforms.x = parseFloat(fieldCharacterInitX.value);
+charInitFields.forEach(({f, p}) => {
+    f.addEventListener("input", () => {
+        if (curSelectedCharacter === null) return;
+        const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
 
-    selectCharacterEntry(curSelectedCharacter);
-    updatePositionsToLatest();
-});
+        character.initTransforms[p] = parseFloat(f.value);
 
-fieldCharacterInitY.addEventListener("input", () => {
-    if (curSelectedCharacter === null) return;
-    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
-
-    character.initTransforms.y = parseFloat(fieldCharacterInitY.value);
-
-    selectCharacterEntry(curSelectedCharacter);
-    updatePositionsToLatest();
-});
-
-fieldCharacterInitR.addEventListener("input", () => {
-    if (curSelectedCharacter === null) return;
-    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
-
-    character.initTransforms.rotate = parseFloat(fieldCharacterInitR.value);
-
-    selectCharacterEntry(curSelectedCharacter);
-    updatePositionsToLatest();
-});
-
-fieldCharacterInitS.addEventListener("input", () => {
-    if (curSelectedCharacter === null) return;
-    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
-
-    character.initTransforms.scale = parseFloat(fieldCharacterInitS.value);
-
-    selectCharacterEntry(curSelectedCharacter);
-    updatePositionsToLatest();
-});
-
-fieldCharacterInitO.addEventListener("input", () => {
-    if (curSelectedCharacter === null) return;
-    const character = curCharacters.filter((e) => e.id === curSelectedCharacter)[0];
-
-    character.initTransforms.opacity = parseFloat(fieldCharacterInitO.value);
-
-    selectCharacterEntry(curSelectedCharacter);
-    updatePositionsToLatest();
+        selectCharacterEntry(curSelectedCharacter);
+        updatePositionsToLatest();
+    });
 });
 
 const worldImport = document.getElementById("world-import");
@@ -3374,6 +3527,9 @@ worldImport.addEventListener("input", (e) => {
             const loaded = JSON.parse(e.target.result.toString());
 
             ipcRenderer.send("load-file", webUtils.getPathForFile(fileList[0]));
+
+            hasLoaded = false;
+            fromImport = true;
 
             //
 
@@ -3409,8 +3565,6 @@ worldImport.addEventListener("input", (e) => {
 
             //
 
-            hasLoaded = false;
-            fromImport = true;
             init();
         }
 
@@ -3516,44 +3670,23 @@ fieldWorldInitBGLoad.addEventListener("input", () => {
     }
 });
 
-fieldWorldInitBGX.addEventListener("input", () => {
-    bg.initX = parseFloat(fieldWorldInitBGX.value);
-    updatePositionsToLatest();
-});
+const worldInitFields = [
+    { f: fieldWorldInitBGX, o: bg, p: "initX" },
+    { f: fieldWorldInitBGY, o: bg, p: "initY" },
+    { f: fieldWorldInitBGS, o: bg, p: "initS" },
+    { f: fieldWorldInitBGR, o: bg, p: "initR" },
 
-fieldWorldInitBGY.addEventListener("input", () => {
-    bg.initY = parseFloat(fieldWorldInitBGY.value);
-    updatePositionsToLatest();
-});
+    { f: fieldWorldInitCamX, o: camera, p: "initX" },
+    { f: fieldWorldInitCamY, o: camera, p: "initY" },
+    { f: fieldWorldInitCamZ, o: camera, p: "initZ" },
+    { f: fieldWorldInitCamR, o: camera, p: "initR" }
+];
 
-fieldWorldInitBGS.addEventListener("input", () => {
-    bg.initS = parseFloat(fieldWorldInitBGS.value);
-    updatePositionsToLatest();
-});
-
-fieldWorldInitBGR.addEventListener("input", () => {
-    bg.initR = parseFloat(fieldWorldInitBGR.value);
-    updatePositionsToLatest();
-});
-
-fieldWorldInitCamX.addEventListener("input", () => {
-    camera.initX = parseFloat(fieldWorldInitCamX.value);
-    updatePositionsToLatest();
-});
-
-fieldWorldInitCamY.addEventListener("input", () => {
-    camera.initY = parseFloat(fieldWorldInitCamY.value);
-    updatePositionsToLatest();
-});
-
-fieldWorldInitCamZ.addEventListener("input", () => {
-    camera.initZ = parseFloat(fieldWorldInitCamZ.value);
-    updatePositionsToLatest();
-});
-
-fieldWorldInitCamR.addEventListener("input", () => {
-    camera.initR = parseFloat(fieldWorldInitCamR.value);
-    updatePositionsToLatest();
+worldInitFields.forEach(({f, o, p}) => {
+    f.addEventListener("input", () => {
+        o[p] = parseFloat(f.value);
+        updatePositionsToLatest();
+    });
 });
 
 const timelineMain = document.getElementById("timeline-main");
@@ -3690,6 +3823,8 @@ timelinePresent.addEventListener("click", () => {
         editorMain.style.display = "none";
     }, 35 * 20)
 
+    canProgress = false;
+
     setTimeout(() => {
         inEditor = false;
     
@@ -3699,6 +3834,8 @@ timelinePresent.addEventListener("click", () => {
         curDialogue = 0;
         curDialogueCurTime = 0;
         curDialoguePlaying = true;
+
+        canProgress = true;
     }, 40 * 20) 
 });
 

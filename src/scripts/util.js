@@ -81,7 +81,7 @@ function formatTime(d) {
     var hDisplay = h > 0 ? h + ":" : "";
     var mDisplay = m + ":";
     var sDisplay = s.toString().padStart(2, "0");
-    return hDisplay + mDisplay + sDisplay; 
+    return hDisplay + mDisplay + sDisplay;
 }
 
 function popUpError(text) {
@@ -146,12 +146,12 @@ function transitionStinger(manual = false) {
                             if (i == 17 && j == 21) {
                                 main.remove();
                             }
-    
+
                             main.style.backdropFilter = "";
                             div.style.transform = "scaleY(0%)";
                             div.style.opacity = 0;
                             div.style.backgroundColor = "#555555";
-    
+
                             sfxTransOut.play()
                         }, 550);
                     }
@@ -179,3 +179,37 @@ const removeJumpSymbol = `
     </g>
 </svg>
 `
+
+function hexToRgb(hex) {
+    var c;
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) {
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+        }
+        c = '0x' + c.join('');
+        return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+    }
+    throw new Error('Bad Hex');
+}
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function setNestedProperty(obj, path, value) {
+    const keys = path.split(".");
+    const lastKey = keys.pop();
+    const target = keys.reduce((o, key) => o[key], obj);
+    target[lastKey] = value;
+}
+
+function getNestedProperty(obj, path) {
+    const keys = path.split(".");
+    return keys.reduce((o, key) => (o ? o[key] : undefined), obj);
+}

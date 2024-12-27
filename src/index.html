@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/dialogue.css">
+    <link rel="stylesheet" href="styles/blabla.css">
     <link rel="stylesheet" href="styles/editor.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -114,6 +115,9 @@
                 <div class="generic-header">
                     <span>Inspector</span>
                     <div class="button-tray">
+                        <div class="button white" id="settings-open">
+                            <i class="bx bxs-cog"></i>
+                        </div>
                         <div class="button white">
                             <i class='bx bx-import'></i>
                             <input type="file" accept=".scn" id="world-import">
@@ -160,16 +164,24 @@
                         <input type="number" id="field-character-inity" step="10">
                     </div>
                     <div class="field-group-character field-double stretchy">
-                        <b>Initial Rotate</b>
-                        <input type="number" id="field-character-initr" step="10">
-                    </div>
-                    <div class="field-group-character field-double stretchy">
                         <b>Initial Scale</b>
                         <input type="number" id="field-character-inits" step="0.1">
                     </div>
                     <div class="field-group-character field-double stretchy">
+                        <b>Initial Rotate</b>
+                        <input type="number" id="field-character-initr" step="10">
+                    </div>
+                    <div class="field-group-character field-double stretchy">
                         <b>Initial Opacity</b>
                         <input type="number" id="field-character-inito" step="0.1" min="0" max="1">
+                    </div>
+                    <div class="field-group-character">
+                        <hr>
+                    </div>
+                    <div class="field-group-character">
+                        <b>Layers</b>
+                        <input type="text" id="field-character-layersearch" placeholder="🔍 Search for a layer...">
+                        <div class="generic-list alternating" id="field-character-layers"></div>
                     </div>
 
                     <div class="field-group-world">
@@ -296,10 +308,6 @@
                             <b>Loop Animation</b>
                             <div class="button white" id="field-dialogue-loopanim"></div>
                         </div>
-                        <div>
-                            <b>Mix Duration</b>
-                            <input type="number" id="field-dialogue-mixanim" step="0.1" style="width: 72px;">
-                        </div>
                     </div>
                     <hr class="field-group-speech">
                     <div class="field-group-speech">
@@ -400,12 +408,83 @@
 
                     <hr class="field-group-all">
 
+                    <div class="field-group-all">
+                        <b>Change Background</b>
+                        <select id="field-dialogue-changebg">
+                            <option value="???">None (don't change)</option>
+                        </select>
+                        <div class="field-double nearer">
+                            <div class="generic-button green" id="field-dialogue-changebglink">
+                                Load from URL
+                            </div>
+                            <div class="generic-button green">
+                                Load from storage
+                                <input type="file" multiple id="field-dialogue-changebgload" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Fade BG</b>
+                            <div class="button white" id="field-dialogue-fadebg"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-fadebgdur" step="0.1">
+                    </div>
+
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Change BG X</b>
+                            <div class="button white" id="field-dialogue-cbgx"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-cbgtox" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Change BG Y</b>
+                            <div class="button white" id="field-dialogue-cbgy"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-cbgtoy" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Change BG Scale</b>
+                            <div class="button white" id="field-dialogue-cbgs"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-cbgtos" step="0.1">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <div>
+                            <b>Change BG Rotate</b>
+                            <div class="button white" id="field-dialogue-cbgr"></div>
+                        </div>
+                        <input type="number" id="field-dialogue-cbgtor" step="10">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Change BG Duration</b>
+                        <input type="number" id="field-dialogue-cbgdur" step="0.1" min="0">
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Change BG Ease Type</b>
+                        <select id="field-dialogue-cbgeasetype"></select>
+                    </div>
+                    <div class="field-group-all field-double stretchy">
+                        <b>Change BG Ease Direction</b>
+                        <select id="field-dialogue-cbgeasedir">
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                            <option value="InOut">In and Out</option>
+                        </select>
+                    </div>
+
+                    <hr class="field-group-all">
+
                     <div class="field-group-all field-double stretchy">
                         <div>
                             <b>Stop BGM</b>
                             <div class="button white" id="field-dialogue-stopbgm"></div>
                         </div>
-                        <input type="number" id="field-dialogue-stopbgmdur" step="0.1">
+                        <input type="number" id="field-dialogue-stopbgmdur" step="0.1" min="0">
                     </div>
 
                     <div class="field-group-all field-double stretchy">
@@ -413,7 +492,7 @@
                             <b>Stop SFX</b>
                             <div class="button white" id="field-dialogue-stopsfx"></div>
                         </div>
-                        <input type="number" id="field-dialogue-stopsfxdur" step="0.1">
+                        <input type="number" id="field-dialogue-stopsfxdur" step="0.1" min="0">
                     </div>
 
                     <div class="field-group-all field-double stretchy">
@@ -421,7 +500,7 @@
                             <b>Stop VO</b>
                             <div class="button white" id="field-dialogue-stopvo"></div>
                         </div>
-                        <input type="number" id="field-dialogue-stopvodur" step="0.1">
+                        <input type="number" id="field-dialogue-stopvodur" step="0.1" min="0">
                     </div>
 
                     <hr class="field-group-all">
@@ -450,7 +529,7 @@
                             <b>BGM Fade</b>
                             <div class="button white" id="field-dialogue-bgmfade"></div>
                         </div>
-                        <input type="number" id="field-dialogue-bgmfadedur" step="0.1">
+                        <input type="number" id="field-dialogue-bgmfadedur" step="0.1" min="0">
                     </div>
 
                     <hr class="field-group-all">
@@ -635,13 +714,79 @@
         <div class="popup-main" id="model-search" style="width: 70%; max-width: unset; display: none;">
             <h2>NKAS Catalog</h2>
             <div class="input-tray">
-                <input type="text" id="model-search-query" placeholder="🔎">
+                <input type="text" id="model-search-query" placeholder="🔍 Search for a model...">
                 <div class="generic-button white" id="model-search-refresh">Refresh</div>
             </div>
             <div class="generic-list alternating" id="model-search-list">
             </div>
             <div class="popup-button-tray">
                 <div class="button green" id="model-search-exit">Reload</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="generic-popup" id="settings-main" style="display: none;">
+        <div class="popup-main" style="width: 35%; max-width: unset; height: 45%; align-items: stretch;">
+            <div class="generic-header" style="border: none; padding: 0px 16px;">
+                Settings
+                <div class="button-tray">
+                    <div class="button red" id="settings-exit">
+                        <i class="bx bx-x"></i>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="generic-list generic-panel">
+                <div class="field-double stretchy">
+                    <b>
+                        Audio: BGM Volume<br>
+                        <span>Volume for background music.</span>
+                    </b>
+                    <input type="number" id="" min="0" max="1" step="0.1">
+                </div>
+                <div class="field-double stretchy">
+                    <b>
+                        Audio: SFX Volume<br>
+                        <span>Volume for sound effects.</span>
+                    </b>
+                    <input type="number" id="" min="0" max="1" step="0.1">
+                </div>
+                <div class="field-double stretchy">
+                    <b>
+                        Audio: VO Volume<br>
+                        <span>Volume for voice overs.</span>
+                    </b>
+                    <input type="number" id="" min="0" max="1" step="0.1">
+                </div>
+                <hr>
+                <div class="field-double stretchy">
+                    <b>
+                        Scenario: Default Name<br>
+                        <span>Set the default name for a new Scenario file.</span>
+                    </b>
+                    <input type="text" id="">
+                </div>
+                <hr>
+                <div class="field-double stretchy">
+                    <b>
+                        Auto: Select Choice<br>
+                        <span>Select a choice by a set condition.</span>
+                    </b>
+                    <select id="">
+                        <option value="selectWhenOne">Only select when there's one choice</option>
+                        <option value="selectFirst">Always select the first choice</option>
+                        <option value="selectLast">Always select the last choice</option>
+                        <option value="selectRandom">Always select a random choice</option>
+                        <option value="selectNone">Don't select a choice</option>
+                    </select>
+                </div>
+                <div class="field-double stretchy">
+                    <b>
+                        Auto: Delay After Typing<br>
+                        <span>Set the small delay after the typing animation finishes.</span>
+                    </b>
+                    <input type="number" id="">
+                </div>
             </div>
         </div>
     </div>
@@ -653,9 +798,34 @@
         </div>
     </div>
 
+    <div class="blabla-main" style="display: none;">
+        <div class="blabla-wrapper" id="blabla-conversation">
+            <div class="blabla-header">
+                <span id="blabla-chatname">Old Man</span>
+            </div>
+            <div class="blabla-content">
+                <div class="blabla-chat-main switch">
+                    <div class="chat-pfp"></div>
+                    <span class="chat-speaker">Trony</span>
+                    <span class="chat-bubble">Lorem ipsum dolor sit amet.</span>
+                </div>
+                <div class="blabla-chat-main">
+                    <span class="chat-bubble">Message with<br>Line break</span>
+                </div>
+                <div class="blabla-chat-main switch sender">
+                    <span class="chat-bubble choice-list">
+                        <span class="choice-entry">dsfdsfasdfdsafsadf</span>
+                        <span class="choice-entry">FUCK</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="./spine/spine-player40.js"></script>
     <script src="./spine/spine-player41.js"></script>
 
+    <!-- <script src="./scripts/settings.js"></script> -->
     <script src="./scripts/util.js"></script>
     <script src="./scripts/character.js"></script>
     <script src="./scripts/dialogue.js" type="module"></script>
