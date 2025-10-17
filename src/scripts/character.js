@@ -112,6 +112,10 @@ function createCharacter(id, spineVer = 4.1, defaultAnimation = 'idle', x = 0, y
                     }
                 }
             }
+
+            characters[immut].wrapper.querySelector("canvas").addEventListener("webglcontextlost", () => {
+                popUpError("Context for model ID " + immut + " lost.<br>The character may not render properly.");
+            });
         }
     }
 
@@ -147,10 +151,12 @@ function characterLoop(elapsed) {
 
         // character.spineObject.zoomMultiplier = 1 / character.transforms.scale;
 
-        character.wrapper.querySelector("canvas").style.left = `50%`;
-        character.wrapper.querySelector("canvas").style.top = `50%`;
-        character.wrapper.querySelector("canvas").style.width = character.transforms.scale * 2048;
-        character.wrapper.querySelector("canvas").style.height = character.transforms.scale * 2048;
-        character.wrapper.querySelector("canvas").style.transform = `translate(-50%, -50%)`;
+        const characterCanvas = character.wrapper.querySelector("canvas");
+
+        characterCanvas.style.left = `50%`;
+        characterCanvas.style.top = `50%`;
+        characterCanvas.style.width = character.transforms.scale * 2048;
+        characterCanvas.style.height = character.transforms.scale * 2048;
+        characterCanvas.style.transform = `translate(-50%, -50%)`;
     }
 }

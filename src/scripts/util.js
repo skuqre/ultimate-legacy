@@ -213,3 +213,27 @@ function getNestedProperty(obj, path) {
     const keys = path.split(".");
     return keys.reduce((o, key) => (o ? o[key] : undefined), obj);
 }
+
+/**
+ * @param { Array } arr array of elements
+ * @param { Element } ele element in `arr` to exclude
+ * @param { Float } y client Y
+ */
+function getElementAfterDrag(arr, ele, y) {
+    const array = arr.filter(e => e !== ele);
+
+    // i definitely didnt write this
+    return array.reduce(
+        (closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+    
+          if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+          } else {
+            return closest;
+          }
+        },
+        { offset: Number.NEGATIVE_INFINITY }
+      ).element;    
+}

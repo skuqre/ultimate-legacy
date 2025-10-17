@@ -18,7 +18,7 @@ const psb = new FontFace('Pretendard-SemiBold', "url('../assets/fonts/Pretendard
 await psb.load();
 document.fonts.add(psb);
 
-const canvas = document.createElement("canvas");``
+const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
 const sfxType = new Audio("../assets/sounds/dialogue_type.wav");
@@ -1324,6 +1324,13 @@ window.addEventListener("keyup", (e) => {
             }
             case "m": {
                 dialogueAdd.dispatchEvent(new Event("click"));
+                if (e.shiftKey && e.altKey) {
+                    curScenario[curScenario.length - 1].type = "Speech";
+                    curScenario[curScenario.length - 1].content = curScenario.length + "";
+
+                    updateDialogueList();
+                    selectDialogueEntry(curSelectedEntry);
+                }
                 break;
             }
             case "delete": {
@@ -1333,7 +1340,7 @@ window.addEventListener("keyup", (e) => {
             case "l": {
                 prompt({
                     title: "Load from JSON array",
-                    label: "Load a dialogue from a JSON array (skuqre syntax LMAO)",
+                    label: "Load a dialogue from a JSON array (skuqre syntax)",
                     inputAttrs: {
                         type: 'text',
                         required: true
@@ -1497,6 +1504,7 @@ function updateDialogueList() {
         const div = document.createElement("div");
         div.classList.add("generic-list-item");
         div.classList.add("dialogue-entry");
+        div.draggable = true;
 
         let speaker = "";
         let content = "";
@@ -1852,6 +1860,62 @@ function selectCharacterEntry(to) {
     updateInspectorPanel();
 }
 
+let draggingEntry = null;
+
+editorDialogueList.addEventListener("dragstart", (e) => {
+    if (draggingEntry !== null) return;
+    draggingEntry = e.target;
+
+    draggingEntry.style.opacity = 0.3;
+});
+
+editorDialogueList.addEventListener("dragend", (e) => {
+    if (draggingEntry === null) return;
+
+    const entryIndex = curEntries.indexOf(draggingEntry);
+
+    const afterElement = getElementAfterDrag(curEntries, draggingEntry, e.clientY);
+    let newIndex = null;
+    if (afterElement == null) {
+        newIndex = curScenario.length - 1;
+    } else {
+        newIndex = Array.from(editorDialogueList.children).indexOf(afterElement);
+    }
+
+    const selectedEntry = curScenario[curSelectedEntry];
+    
+    const [movedItem] = curScenario.splice(entryIndex, 1);
+    curScenario.splice(newIndex, 0, movedItem);
+    let newSelectedIndex = curScenario.indexOf(selectedEntry);
+
+    updateDialogueList();
+    selectDialogueEntry(newSelectedIndex);
+
+    draggingEntry.style.opacity = 1;
+
+    draggingEntry = null;
+});
+
+editorDialogueList.addEventListener("dragover", (e) => {
+    if (draggingEntry === null) return;
+
+    e.preventDefault();
+
+    const afterElement = getElementAfterDrag(curEntries, draggingEntry, e.clientY);
+    let newIndex = null;
+    if (afterElement == null) {
+        newIndex = curScenario.length - 1;
+    } else {
+        newIndex = Array.from(editorDialogueList.children).indexOf(afterElement);
+    }
+
+    for (const i of curEntries) {
+        i.style.boxShadow = null;   
+    }
+    const w = newIndex === curSelectedEntry ? 8 : 4;
+    curEntries[newIndex].style.boxShadow = `0 -${w}px 0 palegreen inset, 0 ${w}px 0 palegreen inset`;
+});
+
 async function getModelFromNKAS() {
     const req = await fetch("https://nkas-l2d.pages.dev/characters.json");
     const json = await req.json();
@@ -1902,48 +1966,78 @@ function updateModelList(a) {
         const tray = document.createElement("div");
         tray.classList.add("button-tray");
 
-        const button = document.createElement("div");
-        button.classList.add("button");
-        button.classList.add("green");
-        button.innerHTML = `<i class="bx bx-plus"></i>`;
+        const buttonIcons = {
+            idle: `<i class="bx bx-plus"></i>`,
+            aim: `<img src="../assets/images/icon_attacker.png" />`,
+            cover: `<img src="../assets/images/icon_defender.png" />`,
+        }
+        for (const n of ["idle", "aim", "cover"]) {
+            const icon = buttonIcons[n];
 
-        button.onclick = async () => {
-            if (button.getAttribute("active") == "false") return;
-            modelsAdding += 1;
+            const button = document.createElement("div");
+            button.classList.add("button");
+            button.classList.add("green");
+            button.innerHTML = icon;
 
-            button.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
-            button.setAttribute("active", false);
+            button.onclick = async () => {
+                if (button.getAttribute("active") == "false") return;
+                modelsAdding += 1;
 
-            const req = await fetch("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/data.json");
-            const json = await req.json();
+                button.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
+                button.setAttribute("active", false);
 
-            const dupes = curCharacters.filter(e => e.id.startsWith(invertedModels[immut]));
+                let req;
+                let json;
 
-            curCharacters.push({
-                id: invertedModels[immut] + (dupes.length > 0 ? "_" + dupes.length : ""),
-                type: "character",
-                name: immut,
-                ver: json.ver,
-                initAnimation: "idle",
-                initVariant: null,
-                initTransforms: {
-                    x: 1920 * 0.5,
-                    y: 1080 * 0.9,
-                    scale: 1,
-                    rotate: 0,
-                    opacity: 1
-                },
-                customPath: "https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/idle/" + invertedModels[immut],
-                initLayerEdits: {}
-            });
+                try {
+                    req = await fetch("https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/" + n + "/data.json")
+                    json = await req.json();
+                } catch(e) {
+                    popUpError(`No ${n} model for ${immut} available.<br>(${e})`);
 
-            button.innerHTML = `<i class="bx bx-plus"></i>`;
-            button.setAttribute("active", true);
+                    button.innerHTML = icon;
+                    button.setAttribute("active", true);
+                    modelsAdding -= 1;
 
-            modelsAdding -= 1;
+                    return;
+                }
+
+                const dupes = curCharacters.filter(e => e.id.startsWith(invertedModels[immut]));
+
+                const fileNameTentative = invertedModels[immut].split("_");
+                fileNameTentative.splice(1, 0, n)
+                const filename = n === "idle" ? invertedModels[immut] : fileNameTentative.join("_");
+
+                curCharacters.push({
+                    id: filename + (dupes.length > 0 ? "_" + dupes.length : ""),
+                    type: "character",
+                    name: immut,
+                    ver: json.ver,
+                    initAnimation: n === "idle" ? "idle" : n + "_idle",
+                    initVariant: null,
+                    initTransforms: {
+                        x: 1920 * 0.5,
+                        y: 1080 * 0.9,
+                        scale: 1,
+                        rotate: 0,
+                        opacity: 1
+                    },
+                    customPath: "https://nkas-l2d.pages.dev/characters/" + invertedModels[immut] + "/" + n + "/" + filename,
+                    initLayerEdits: {}
+                });
+
+                button.innerHTML = `<i class="bx bx-check"></i>`;
+                modelsAdding -= 1;
+
+                setTimeout(() => {
+                    button.innerHTML = icon;
+                    button.setAttribute("active", true);
+                }, 500);
+            }
+
+            tray.appendChild(button);
         }
 
-        tray.appendChild(button);
         div.appendChild(tray);
 
         modelSearchList.appendChild(div);
@@ -2575,7 +2669,7 @@ function selectJumpForChoice(jumpIndex) {
     if (!curScenario[curDialogue]) return;
     const entry = curScenario[curDialogue];
 
-    if (entry.choices[choiceEditing]) {
+    if (entry.choices && entry.choices[choiceEditing]) {
         entry.choices[choiceEditing].jump = jumpIndex;
     }
 
@@ -3369,6 +3463,18 @@ function updateCharacterLayers(character, arr) {
     fieldCharacterLayers.innerHTML = "";
     const characterSel = curCharacters.filter((e) => e.id === character.id)[0];
 
+    // to do
+    // keyframe system
+    // test layer system exhaustively
+    // blabla indicators
+    // blabla system messages
+    // fix some colors
+    // add hover effect to clickable blabla buttons
+    // fix gap on choices
+    // fix choice widths
+    // add pending message
+    // add ambient track
+
     for (const i of arr) {
         const div = document.createElement("div")
         div.classList.add("generic-list-item");
@@ -3410,6 +3516,12 @@ function updateCharacterLayers(character, arr) {
         color.value = colVal;
         alpha.value = alpVal;
 
+        const hide = document.createElement("div");
+        hide.classList.add("button");
+        hide.classList.add("white");
+        hide.innerHTML = alpVal > 0 ? `<i class='bx bx-show-alt'></i>` : `<i class='bx bx-hide'></i>`;
+        tray.appendChild(hide);
+
         color.oninput = () => {
             if (color.value !== "#ffffff" || clamp(parseFloat(alpha.value), 0, 1) !== 1) {
                 characterSel.initLayerEdits[i] = {
@@ -3422,6 +3534,9 @@ function updateCharacterLayers(character, arr) {
                 }
             }
 
+            const huh = parseFloat(alpha.value) > 0;
+            hide.innerHTML = huh ? `<i class='bx bx-show-alt'></i>` : `<i class='bx bx-hide'></i>`;
+
             initEdits();
         }
         alpha.oninput = color.oninput;
@@ -3430,6 +3545,15 @@ function updateCharacterLayers(character, arr) {
             selectDialogueEntry(curSelectedEntry);
         }
         alpha.onchange = color.onchange;
+
+        hide.onclick = () => {
+            const huh = parseFloat(alpha.value) > 0;
+            alpha.value = huh ? "0" : "1";
+            hide.innerHTML = huh ? `<i class='bx bx-hide'></i>` : `<i class='bx bx-show-alt'></i>`;
+            
+            alpha.oninput();
+            alpha.onchange();
+        }
 
         div.appendChild(tray);
 

@@ -4,6 +4,9 @@ const fs = require("fs");
 // disable lcd antialiasing, it stinks
 app.commandLine.appendSwitch("--disable-lcd-text");
 
+// (probably) set a soft limit to how many models can be loaded
+app.commandLine.appendSwitch("--max-active-webgl-contexts", "24");
+
 let mainWindow;
 const WINDOWSIZE = [1920, 1080]
 
@@ -20,7 +23,7 @@ const createWindow = () => {
             // devTools: false
         },
         fullscreenable: true,
-        // fullscreen: true
+        fullscreen: true
     });
 
     require('@electron/remote/main').initialize();
@@ -66,6 +69,8 @@ const createWindow = () => {
         mainWindow.emit("resize");
         curLoadedFilePath = null;
     });
+
+    mainWindow.emit("resize");
 }
 
 let curLoadedFilePath = null;
